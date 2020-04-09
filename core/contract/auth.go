@@ -7,31 +7,22 @@ import (
 
 type IAuthService interface {
 	// регистрация пользователя
-	SignUp(ctx context.Context, dto SignupDto) (Session, *model.User, error)
+	SignUp(ctx context.Context, dto model.SignupDto) (model.Session, *model.User, error)
 	// аутентификация пользователя
-	Login(ctx context.Context, credentials Credentials) (Session, error)
+	Login(ctx context.Context, credentials model.Credentials) (model.Session, error)
 	// получение пользователя по сессии
-	GetUserBySession(ctx context.Context, sessionId Session) (*model.User, error)
+	GetUserBySession(ctx context.Context, sessionId model.Session) (*model.User, error)
 	// выход из системы
-	Logout(ctx context.Context, sessionId Session) error
+	Logout(ctx context.Context, sessionId model.Session) error
 }
 
 type IAuthRepository interface {
+	// аутентификация
+	Authenticate(ctx context.Context, credentials model.Credentials) (model.IntId, error)
 	// начало сессии
-	CheckCredentials(ctx context.Context, credentials Credentials) (bool, error)
-	// начало сессии
-	StartSession(ctx context.Context, userId model.IntId) (Session, error)
+	StartSession(ctx context.Context, userId *model.User) (model.Session, error)
 	// получение id пользователя по сессии
-	GetUserIdBySession(ctx context.Context, sessionId Session) (model.IntId, error)
+	GetUserIdBySession(ctx context.Context, sessionId model.Session) (model.IntId, error)
 	// выход из системы
-	Logout(ctx context.Context, sessionId Session) error
+	Logout(ctx context.Context, sessionId model.Session) error
 }
-
-// DTO для аутентификации
-type Credentials struct {
-	Email    string
-	Password string
-}
-
-// идентификатор сессии
-type Session string

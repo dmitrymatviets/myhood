@@ -1,10 +1,6 @@
 package contract
 
-import (
-	"context"
-	"github.com/dmitrymatviets/myhood/core/model"
-)
-
+/*
 type IMessageService interface {
 	SendMessage(ctx context.Context, from model.User, to model.IntId, msg string) error
 	MarkMessageAsRead(ctx context.Context, msgId string) error
@@ -18,3 +14,4 @@ type IMessageRepository interface {
 	GetThreads(ctx context.Context, user *model.User, count int) ([]*model.Thread, error)
 	GetMessages(ctx context.Context, thread *model.Thread, count int) ([]*model.Message, error)
 }
+*/
