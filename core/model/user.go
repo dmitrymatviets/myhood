@@ -1,6 +1,9 @@
 package model
 
-import "time"
+import (
+	"github.com/google/uuid"
+	"time"
+)
 
 type IntId int64
 
@@ -60,11 +63,38 @@ type DisplayUserDto struct {
 
 // DTO для регистрации пользователя
 type SignupDto struct {
-	Id          string    `json:"id"`
-	Name        string    `json:"name"`
-	Surname     string    `json:"surname"`
-	DateOfBirth time.Time `json:"dateOfBirth"`
-	Gender      string    `json:"gender"`
+	Email       string    `json:"email" binding:"required"`
+	Password    string    `json:"password" binding:"required"`
+	Name        string    `json:"name" binding:"required"`
+	Surname     string    `json:"surname" binding:"required"`
+	DateOfBirth time.Time `json:"dateOfBirth" binding:"required"`
+	Gender      string    `json:"gender" binding:"required"`
 	Interests   []string  `json:"interests"`
-	City        string    `json:"city"`
+	City        string    `json:"city" binding:"required"`
+	AvatarFile  string    `json:"avatar"`
+}
+
+func (dto SignupDto) ToUser(city City) *User {
+	return &User{
+		Email:       dto.Email,
+		Name:        dto.Name,
+		Surname:     dto.Surname,
+		DateOfBirth: dto.DateOfBirth,
+		Gender:      dto.Gender,
+		Interests:   dto.Interests,
+		City:        city,
+	}
+}
+
+// DTO для аутентификации
+type Credentials struct {
+	Email    string
+	Password string
+}
+
+// идентификатор сессии
+type Session string
+
+func NewSession() Session {
+	return Session(uuid.New().String())
 }
