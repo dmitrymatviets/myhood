@@ -10,8 +10,19 @@ type InMemCityRepository struct {
 	cities map[model.IntId]model.City
 }
 
-func (i InMemCityRepository) GetCities(ctx context.Context) ([]model.City, error) {
-	panic("implement me")
+func (i *InMemCityRepository) GetCities(ctx context.Context) ([]model.City, error) {
+	result := make([]model.City, 0, 4)
+	for _, city := range i.cities {
+		result = append(result, city)
+	}
+	return result, nil
+}
+
+func (i *InMemCityRepository) GetById(ctx context.Context, id model.IntId) (*model.City, error) {
+	if city, ok := i.cities[id]; ok {
+		return &city, nil
+	}
+	return nil, nil
 }
 
 func NewInMemCityRepository() contract.ICityRepository {

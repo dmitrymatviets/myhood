@@ -8,7 +8,7 @@ import (
 )
 
 type AuthService struct {
-	authRepo contract.IAuthRepository
+	cityRepo contract.ICityRepository
 	userRepo contract.IUserRepository
 }
 
@@ -16,6 +16,8 @@ func (as *AuthService) SignUp(ctx context.Context, dto model.SignupDto) (model.S
 
 	// валидация
 	// https://github.com/gin-gonic/gin/issues/2167
+
+	city, err := as.cityRepo.GetById()
 
 	var session model.Session
 	var user *model.User
@@ -51,4 +53,8 @@ func (as *AuthService) GetUserBySession(ctx context.Context, sessionId model.Ses
 
 func (as *AuthService) Logout(ctx context.Context, sessionId model.Session) error {
 	panic("implement me")
+}
+
+func validateSignupDto() {
+
 }

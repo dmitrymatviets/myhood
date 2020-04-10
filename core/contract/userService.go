@@ -52,5 +52,8 @@ type IUserRepository interface {
 }
 
 type ICityRepository interface {
+	// получение списка городов
 	GetCities(ctx context.Context) ([]model.City, error)
+	// получение города по id
+	GetById(ctx context.Context, id model.IntId) (*model.City, error)
 }
