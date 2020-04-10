@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"github.com/dmitrymatviets/myhood/pkg"
 	"github.com/pkg/errors"
 	"sync"
 
@@ -28,15 +29,6 @@ func (r *InmemoryUserRepository) Authenticate(ctx context.Context, credentials m
 	return 0, errors.New("invalid credentials")
 }
 
-func (r *InmemoryUserRepository) StartSession(ctx context.Context, user *model.User) (model.Session, error) {
-	r.Lock()
-	defer r.Unlock()
-
-	session := model.NewSession()
-	r.sessions[session] = user.Id
-	return session, nil
-}
-
 func (r *InmemoryUserRepository) GetUserIdBySession(ctx context.Context, sessionId model.Session) (model.IntId, error) {
 	r.RLock()
 	defer r.RUnlock()
@@ -58,8 +50,28 @@ func (r *InmemoryUserRepository) Logout(ctx context.Context, sessionId model.Ses
 	return errors.New("session does not exist")
 }
 
-func (r *InmemoryUserRepository) SignUp(ctx context.Context, dto model.SignupDto) (*model.User, error) {
-	panic("implement me")
+func (r *InmemoryUserRepository) SignUp(ctx context.Context, dto model.SignupDto) (model.Session, *model.User, *pkg.PublicError) {
+	var session model.Session
+	var user *model.User
+
+	var err error
+	user, err = as.userRepo.SignUp(ctx, dto)
+	if err != nil {
+		return pkg.NewPublicError("Ошибка регистрации", err)
+	}
+	session, err = as.authRepo.StartSession(ctx, user)
+	if err != nil {
+		return pkg.NewPublicError("Ошибка входа", err)
+	}
+	// TODO нотификация
+	return nil
+
+	if err != nil {
+		return session, user, err
+	}
+
+	return session, user, err
+	return
 }
 
 func (r *InmemoryUserRepository) GetById(ctx context.Context, id model.IntId) (*model.User, error) {
@@ -80,4 +92,13 @@ func (r *InmemoryUserRepository) GetFriends(ctx context.Context, user *model.Use
 
 func (r *InmemoryUserRepository) SaveUser(ctx context.Context, user *model.User) (*model.User, error) {
 	panic("implement me")
+}
+
+func (r *InmemoryUserRepository) startSession(ctx context.Context, user *model.User) (model.Session, error) {
+	r.Lock()
+	defer r.Unlock()
+
+	session := model.NewSession()
+	r.sessions[session] = user.Id
+	return session, nil
 }

@@ -70,7 +70,7 @@ type SignupDto struct {
 	DateOfBirth time.Time `json:"dateOfBirth" binding:"required"`
 	Gender      string    `json:"gender" binding:"required"`
 	Interests   []string  `json:"interests"`
-	City        string    `json:"city" binding:"required"`
+	CityId      IntId     `json:"cityId" binding:"required"`
 	AvatarFile  string    `json:"avatar"`
 }
 

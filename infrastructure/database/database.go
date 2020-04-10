@@ -2,7 +2,6 @@ package database
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
@@ -24,25 +23,6 @@ type DatabaseConfig struct {
 
 type Database struct {
 	Db *sqlx.DB
-}
-
-type TxOrDb interface {
-	sqlx.Execer
-	sqlx.ExecerContext
-	sqlx.Queryer
-	sqlx.QueryerContext
-	sqlx.Preparer
-	sqlx.PreparerContext
-	BindNamed(query string, arg interface{}) (string, []interface{}, error)
-	DriverName() string
-	Get(dest interface{}, query string, args ...interface{}) error
-	MustExec(query string, args ...interface{}) sql.Result
-	NamedExec(query string, arg interface{}) (sql.Result, error)
-	NamedQuery(query string, arg interface{}) (*sqlx.Rows, error)
-	PrepareNamed(query string) (*sqlx.NamedStmt, error)
-	Preparex(query string) (*sqlx.Stmt, error)
-	Rebind(query string) string
-	Select(dest interface{}, query string, args ...interface{}) error
 }
 
 func NewDatabase(c DatabaseConfig) (*Database, error) {
@@ -106,18 +86,6 @@ func (db *Database) transaction(ctx *context.Context) (*sqlx.Tx, error) {
 	return tx, nil
 }
 
-// абстракция для tx или db, из контекста
-// если в контексте есть транзакция, то возвращает ее (как интерфейс TxOrDb)
-// если транзакции нет, то возвращает db (как интерфейс TxOrDb)
-func (db *Database) TxOrDbFromContext(ctx context.Context) TxOrDb {
-	value := (ctx).Value(ContextTransactionKey)
-	tx, ok := value.(*sqlx.Tx)
-	if ok {
-		return tx
-	}
-	return db.Db
-}
-
 func (db *Database) WithTransaction(ctx context.Context, fn func(ctx context.Context) error) (err error) {
 	_, err = db.transaction(&ctx)
 	if err != nil {
@@ -141,3 +109,40 @@ func (db *Database) WithTransaction(ctx context.Context, fn func(ctx context.Con
 	}
 	return errors.WithStack(err)
 }
+
+/*
+
+type TxOrDb interface {
+	sqlx.Execer
+	sqlx.ExecerContext
+	sqlx.Queryer
+	sqlx.QueryerContext
+	sqlx.Preparer
+	sqlx.PreparerContext
+	BindNamed(query string, arg interface{}) (string, []interface{}, error)
+	DriverName() string
+	Get(dest interface{}, query string, args ...interface{}) error
+	MustExec(query string, args ...interface{}) sql.Result
+	NamedExec(query string, arg interface{}) (sql.Result, error)
+	NamedQuery(query string, arg interface{}) (*sqlx.Rows, error)
+	PrepareNamed(query string) (*sqlx.NamedStmt, error)
+	Preparex(query string) (*sqlx.Stmt, error)
+	Rebind(query string) string
+	Select(dest interface{}, query string, args ...interface{}) error
+}
+
+*/
+
+/*
+// абстракция для tx или db, из контекста
+// если в контексте есть транзакция, то возвращает ее (как интерфейс TxOrDb)
+// если транзакции нет, то возвращает db (как интерфейс TxOrDb)
+func (db *Database) TxOrDbFromContext(ctx context.Context) TxOrDb {
+	value := (ctx).Value(ContextTransactionKey)
+	tx, ok := value.(*sqlx.Tx)
+	if ok {
+		return tx
+	}
+	return db.Db
+}
+*/
