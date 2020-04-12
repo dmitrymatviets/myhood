@@ -13,24 +13,14 @@ type AuthService struct {
 }
 
 func (as *AuthService) SignUp(ctx context.Context, dto model.SignupDto) (model.Session, *model.User, error) {
-	var session model.Session
-	var user *model.User
-
 	err := as.validateSignupDto(ctx, dto)
 	if err != nil {
-		return session, user, err
+		return "", nil, err
 	}
 
-	city, err := as.cityRepo.GetById(ctx, dto.CityId)
-	if city == nil {
-		return session, user, pkg.NewPublicError("Неверный город")
-	}
+	session, user, err := as.userRepo.SignUp(ctx, dto)
 	if err != nil {
-		return session, user, pkg.NewPublicError("Ошибка проверки города", err)
-	}
-
-	session, user, err:=as.userRepo.SignUp(ctx, dto){
-
+		return "", nil, err
 	}
 }
 
@@ -46,7 +36,7 @@ func (as *AuthService) Logout(ctx context.Context, sessionId model.Session) erro
 	panic("implement me")
 }
 
-func (as *AuthService) validateSignupDto(ctx context.Context, dto model.SignupDto) error {
+func (as *AuthService) validateSignupDto(ctx context.Context, dto model.SignupDto) *pkg.PublicError {
 	// TODO
 	// валидация
 	// https://github.com/gin-gonic/gin/issues/2167

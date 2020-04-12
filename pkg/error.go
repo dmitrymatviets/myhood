@@ -31,9 +31,9 @@ func NewPublicError(message string, params ...interface{}) *PublicError {
 			}
 		}
 		if internalError == nil {
-			if curInternalError, ok := param.(error); ok {
+			if curInternalError, ok := param.(error); ok && curInternalError != nil {
 				internalError = curInternalError
-				if ie, ok := internalError.(*PublicError); ok {
+				if ie, ok := internalError.(*PublicError); ok && ie != nil {
 					message += ": " + ie.Message
 				}
 				continue

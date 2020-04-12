@@ -18,30 +18,27 @@ type DatabaseConfig struct {
 	DatabaseName string `envconfig:"database"`
 	MaxOpenConns int    `envconfig:"maxopenconns"`
 	MaxIdleConns int    `envconfig:"maxidleconns"`
-	AppName      string `envconfig:"appname"`
 }
 
 type Database struct {
-	Db *sqlx.DB
+	*sqlx.DB
 }
 
 func NewDatabase(c DatabaseConfig) (*Database, error) {
-	cp := new(Database)
-	connString := fmt.Sprintf("server=%s;user id=%s;password=%s;port=%d;database=%s;app name=%s",
-		c.Server,
+	connString := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?parseTime=true",
 		c.User,
 		c.Password,
+		c.Server,
 		c.Port,
 		c.DatabaseName,
-		c.AppName,
 	)
 
-	db, err := sqlx.Open("sqlserver", connString)
+	db, err := sqlx.Open("mysql", connString)
 	if err != nil {
 		return nil, err
 	}
 
-	cp.Db = db
+	cp := &Database{db}
 	db.SetMaxOpenConns(c.MaxOpenConns)
 	db.SetMaxIdleConns(c.MaxIdleConns)
 
@@ -78,7 +75,7 @@ func (db *Database) transaction(ctx *context.Context) (*sqlx.Tx, error) {
 		return tx, nil
 	}
 
-	tx, err = db.Db.Beginx()
+	tx, err = db.Beginx()
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -107,7 +104,7 @@ func (db *Database) WithTransaction(ctx context.Context, fn func(ctx context.Con
 	if err == nil {
 		err = db.commit(&ctx)
 	}
-	return errors.WithStack(err)
+	return err
 }
 
 /*

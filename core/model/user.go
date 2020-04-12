@@ -15,10 +15,11 @@ type User struct {
 	DateOfBirth time.Time `json:"dateOfBirth"`
 	Gender      string    `json:"gender"`
 	Interests   []string  `json:"interests"`
-	City        City      `json:"city"`
+	CityId      IntId     `json:"cityId"`
 	Page        Page      `json:"page"`
-	Avatar      string    `json:"avatar"`
-	FriendIds   []IntId   `json:"friends"`
+	//TODO
+	FriendIds []IntId `json:"friends"`
+	//Avatar      string    `json:"avatar"`
 }
 
 func (u *User) AddFriend(friend *User) {
@@ -49,8 +50,8 @@ type Page struct {
 }
 
 type City struct {
-	Id   IntId
-	Name string
+	Id   IntId  `db:"city_id"`
+	Name string `db:"name"`
 }
 
 type DisplayUserDto struct {
@@ -58,38 +59,45 @@ type DisplayUserDto struct {
 	Name    string `json:"name"`
 	Surname string `json:"surname"`
 	Page    Page   `json:"page"`
-	Avatar  string `json:"avatar"`
+	//Avatar  string `json:"avatar"`
 }
 
 // DTO для регистрации пользователя
 type SignupDto struct {
-	Email       string    `json:"email" binding:"required"`
-	Password    string    `json:"password" binding:"required"`
+	Credentials
 	Name        string    `json:"name" binding:"required"`
 	Surname     string    `json:"surname" binding:"required"`
 	DateOfBirth time.Time `json:"dateOfBirth" binding:"required"`
 	Gender      string    `json:"gender" binding:"required"`
 	Interests   []string  `json:"interests"`
 	CityId      IntId     `json:"cityId" binding:"required"`
-	AvatarFile  string    `json:"avatar"`
+	//	AvatarFile  string    `json:"avatar"`
 }
 
-func (dto SignupDto) ToUser(city City) *User {
-	return &User{
-		Email:       dto.Email,
-		Name:        dto.Name,
-		Surname:     dto.Surname,
-		DateOfBirth: dto.DateOfBirth,
-		Gender:      dto.Gender,
-		Interests:   dto.Interests,
-		City:        city,
+func (dto SignupDto) ToUserWithPassword() *UserWithPassword {
+	return &UserWithPassword{
+		User: &User{
+			Email:       dto.Email,
+			Name:        dto.Name,
+			Surname:     dto.Surname,
+			DateOfBirth: dto.DateOfBirth,
+			Gender:      dto.Gender,
+			Interests:   dto.Interests,
+			CityId:      dto.CityId,
+		},
+		Password: dto.Password,
 	}
+}
+
+type UserWithPassword struct {
+	*User
+	Password string
 }
 
 // DTO для аутентификации
 type Credentials struct {
-	Email    string
-	Password string
+	Email    string `json:"email" binding:"required"`
+	Password string `json:"password" binding:"required"`
 }
 
 // идентификатор сессии

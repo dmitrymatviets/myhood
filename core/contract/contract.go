@@ -30,28 +30,28 @@ type IUserService interface {
 
 type IUserRepository interface {
 	// регистрация пользователя
-	SignUp(ctx context.Context, dto model.SignupDto) (model.Session, *model.User, pkg.PublicError)
+	SignUp(ctx context.Context, UserWithPassword *model.UserWithPassword) (model.Session, *model.User, *pkg.PublicError)
 	// аутентификация
-	Authenticate(ctx context.Context, credentials model.Credentials) (model.IntId, error)
+	Authenticate(ctx context.Context, credentials model.Credentials) (model.Session, *model.User, *pkg.PublicError)
 	// получение id пользователя по сессии
-	GetUserIdBySession(ctx context.Context, sessionId model.Session) (model.IntId, error)
+	GetUserIdBySession(ctx context.Context, sessionId model.Session) (model.IntId, *pkg.PublicError)
 	// выход из системы
-	Logout(ctx context.Context, sessionId model.Session) error
+	Logout(ctx context.Context, sessionId model.Session) *pkg.PublicError
 	// получение пользователя по id
-	GetById(ctx context.Context, id model.IntId) (*model.User, error)
+	GetById(ctx context.Context, id model.IntId) (*model.User, *pkg.PublicError)
 	// получение пользователя по email
-	GetByEmail(ctx context.Context, email string) (*model.User, error)
+	GetByEmail(ctx context.Context, email string) (*model.User, *pkg.PublicError)
 	// получение нескольких пользователей по id
-	GetByIds(ctx context.Context, ids []model.IntId) ([]*model.User, error)
+	GetByIds(ctx context.Context, ids []model.IntId) ([]*model.User, *pkg.PublicError)
 	// получение списка друзей
-	GetFriends(ctx context.Context, user *model.User) ([]*model.DisplayUserDto, error)
+	GetFriends(ctx context.Context, user *model.User) ([]*model.DisplayUserDto, *pkg.PublicError)
 	// сохранение пользователя
-	SaveUser(ctx context.Context, user *model.User) (*model.User, error)
+	SaveUser(ctx context.Context, user *model.User) (*model.User, *pkg.PublicError)
 }
 
 type ICityRepository interface {
 	// получение списка городов
-	GetCities(ctx context.Context) ([]model.City, error)
+	GetCities(ctx context.Context) ([]*model.City, error)
 	// получение города по id
 	GetById(ctx context.Context, id model.IntId) (*model.City, error)
 }
