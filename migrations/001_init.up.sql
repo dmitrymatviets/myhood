@@ -6,7 +6,7 @@ create table cities
 	name nvarchar(100) not null,
 	constraint cities_pk
 		primary key (city_id)
-);
+) ENGINE = INNODB;
 
 insert into cities(name)
 values('Москва'),('Санкт-Петербург'),('Казань'),('Нижний Новгород');
@@ -29,7 +29,7 @@ create table users
 	avatar nvarchar(400) null,
 	constraint users_pk
 		primary key (user_id)
-);
+) ENGINE = INNODB;
 
 
 
@@ -40,11 +40,11 @@ create table sessions
 	created datetime not null,
     constraint sessions_pk
         primary key (session_id)
-);
+) ENGINE = INNODB;
 
 
 create table friends
 (
 	user_id int not null,
 	friend_id int not null
-);
+) ENGINE = INNODB;

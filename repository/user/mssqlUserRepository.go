@@ -21,7 +21,7 @@ func NewMssqlUserRepository(db *database.Database) contract.IUserRepository {
 	return &MssqlUserRepository{db: db}
 }
 
-func (ur *MssqlUserRepository) SignUp(ctx context.Context, user *model.UserWithPassword) (model.Session, *model.User, *pkg.PublicError) {
+func (ur *MssqlUserRepository) SignUp(ctx context.Context, user *model.UserWithPassword) (model.Session, *model.User, error) {
 	var sessionId model.Session
 	var savedUser *model.User
 
@@ -36,17 +36,18 @@ func (ur *MssqlUserRepository) SignUp(ctx context.Context, user *model.UserWithP
 		if localErr != nil {
 			return pkg.NewPublicError("Ошибка завершения регистрации", localErr)
 		}
+
 		return nil
 	})
 
 	if err != nil {
-		return "", nil, err.(*pkg.PublicError)
+		return "", nil, err
 	}
 
 	return sessionId, savedUser, nil
 }
 
-func (ur *MssqlUserRepository) Authenticate(ctx context.Context, credentials model.Credentials) (model.Session, *model.User, *pkg.PublicError) {
+func (ur *MssqlUserRepository) Authenticate(ctx context.Context, credentials model.Credentials) (model.Session, *model.User, error) {
 	var sessionId model.Session
 	var user *model.User
 
@@ -67,23 +68,23 @@ func (ur *MssqlUserRepository) Authenticate(ctx context.Context, credentials mod
 	})
 
 	if tErr != nil {
-		return "", nil, tErr.(*pkg.PublicError)
+		return "", nil, tErr
 	}
 
 	return sessionId, user, nil
 }
 
-func (ur *MssqlUserRepository) GetUserIdBySession(ctx context.Context, sessionId model.Session) (model.IntId, *pkg.PublicError) {
+func (ur *MssqlUserRepository) GetUserIdBySession(ctx context.Context, sessionId model.Session) (model.IntId, error) {
 	panic("implement me")
 }
 
-func (ur *MssqlUserRepository) Logout(ctx context.Context, sessionId model.Session) *pkg.PublicError {
+func (ur *MssqlUserRepository) Logout(ctx context.Context, sessionId model.Session) error {
 	panic("implement me")
 }
 
-func (ur *MssqlUserRepository) GetById(ctx context.Context, id model.IntId) (*model.User, *pkg.PublicError) {
+func (ur *MssqlUserRepository) GetById(ctx context.Context, id model.IntId) (*model.User, error) {
 	dtoUser := userDto{}
-	err := ur.db.GetContext(ctx, &dtoUser,
+	err := ur.db.TxOrDbFromContext(ctx).GetContext(ctx, &dtoUser,
 		`select user_id
                      , email
                      , name
@@ -105,27 +106,27 @@ func (ur *MssqlUserRepository) GetById(ctx context.Context, id model.IntId) (*mo
 	return dtoUser.toUser(), nil
 }
 
-func (ur *MssqlUserRepository) GetByEmail(ctx context.Context, email string) (*model.User, *pkg.PublicError) {
+func (ur *MssqlUserRepository) GetByEmail(ctx context.Context, email string) (*model.User, error) {
 	panic("implement me")
 }
 
-func (ur *MssqlUserRepository) GetByIds(ctx context.Context, ids []model.IntId) ([]*model.User, *pkg.PublicError) {
+func (ur *MssqlUserRepository) GetByIds(ctx context.Context, ids []model.IntId) ([]*model.User, error) {
 	panic("implement me")
 }
 
-func (ur *MssqlUserRepository) GetFriends(ctx context.Context, user *model.User) ([]*model.DisplayUserDto, *pkg.PublicError) {
+func (ur *MssqlUserRepository) GetFriends(ctx context.Context, user *model.User) ([]*model.DisplayUserDto, error) {
 	panic("implement me")
 }
 
-func (ur *MssqlUserRepository) SaveUser(ctx context.Context, user *model.User) (*model.User, *pkg.PublicError) {
+func (ur *MssqlUserRepository) SaveUser(ctx context.Context, user *model.User) (*model.User, error) {
 	panic("implement me")
 }
 
-func (ur *MssqlUserRepository) createUser(ctx context.Context, user *model.UserWithPassword) (*model.User, *pkg.PublicError) {
+func (ur *MssqlUserRepository) createUser(ctx context.Context, user *model.UserWithPassword) (*model.User, error) {
 
 	interestsJson, _ := json.Marshal(user.Interests)
 
-	result, err := ur.db.ExecContext(ctx, `insert into users(email, hash, name, surname, date_of_birth, gender, interests, city_id, page_slug, page_is_private) 
+	result, err := ur.db.TxOrDbFromContext(ctx).ExecContext(ctx, `insert into users(email, hash, name, surname, date_of_birth, gender, interests, city_id, page_slug, page_is_private) 
                                                   values (?, md5(?), ?, ?, ?, ?, ?, ?, ? , ?)`,
 		user.Email,
 		hashSalt+user.Password,
@@ -153,9 +154,9 @@ func (ur *MssqlUserRepository) createUser(ctx context.Context, user *model.UserW
 	return user.User, nil
 }
 
-func (ur *MssqlUserRepository) authenticateInternal(ctx context.Context, credentials model.Credentials) (model.IntId, *pkg.PublicError) {
+func (ur *MssqlUserRepository) authenticateInternal(ctx context.Context, credentials model.Credentials) (model.IntId, error) {
 	var userId model.IntId
-	err := ur.db.GetContext(ctx, &userId,
+	err := ur.db.TxOrDbFromContext(ctx).GetContext(ctx, &userId,
 		`select user_id from users
                 where email = ? and hash = md5(?)`,
 		credentials.Email,
@@ -169,9 +170,9 @@ func (ur *MssqlUserRepository) authenticateInternal(ctx context.Context, credent
 	return userId, nil
 }
 
-func (ur *MssqlUserRepository) startSession(ctx context.Context, userId model.IntId) (model.Session, *pkg.PublicError) {
+func (ur *MssqlUserRepository) startSession(ctx context.Context, userId model.IntId) (model.Session, error) {
 	sessionId := model.NewSession()
-	_, err := ur.db.ExecContext(ctx,
+	_, err := ur.db.TxOrDbFromContext(ctx).ExecContext(ctx,
 		`insert into sessions(session_id, user_id, created) 
                 values (?, ?, now())`,
 		sessionId,

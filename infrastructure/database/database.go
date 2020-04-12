@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
@@ -103,11 +104,12 @@ func (db *Database) WithTransaction(ctx context.Context, fn func(ctx context.Con
 	err = fn(ctx)
 	if err == nil {
 		err = db.commit(&ctx)
+		if err == sql.ErrTxDone {
+			return nil
+		}
 	}
 	return err
 }
-
-/*
 
 type TxOrDb interface {
 	sqlx.Execer
@@ -126,11 +128,10 @@ type TxOrDb interface {
 	Preparex(query string) (*sqlx.Stmt, error)
 	Rebind(query string) string
 	Select(dest interface{}, query string, args ...interface{}) error
+	GetContext(ctx context.Context, dest interface{}, query string, args ...interface{}) error
+	SelectContext(ctx context.Context, dest interface{}, query string, args ...interface{}) error
 }
 
-*/
-
-/*
 // абстракция для tx или db, из контекста
 // если в контексте есть транзакция, то возвращает ее (как интерфейс TxOrDb)
 // если транзакции нет, то возвращает db (как интерфейс TxOrDb)
@@ -140,6 +141,5 @@ func (db *Database) TxOrDbFromContext(ctx context.Context) TxOrDb {
 	if ok {
 		return tx
 	}
-	return db.Db
+	return db
 }
-*/
