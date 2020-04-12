@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>My first Vue app</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+          integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <script src="https://unpkg.com/vue"></script>
+    <style>
+
+        html, body {
+            height: 100%;
+        }
+
+
+        #app-2 {
+            height: 100%;
+        }
+
+        .login-form {
+            width: 30%;
+            height: 50%;
+            display: block;
+        }
+
+
+        .login {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+        }
+
+
+    </style>
+</head>
+<body>
+<div id="app-2">
+    <div v-if="isLogged">
+
+
+        <div class="container-fluid gedf-wrapper">
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="h5">{{user.name}}</div>
+                            <div class="h7 text-muted">Fullname : Miracles Lee Cross</div>
+                            <div class="h7">Developer of web applications, JavaScript, PHP, Java, Python, Ruby, Java, Node.js,
+                                etc.
+                            </div>
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <div class="h6 text-muted">Followers</div>
+                                <div class="h5">5.2342</div>
+                            </li>
+                            <li class="list-group-item">
+                                <div class="h6 text-muted">Following</div>
+                                <div class="h5">6758</div>
+                            </li>
+                            <li class="list-group-item">Vestibulum at eros</li>
+                        </ul>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+    <div class="login" v-else>
+        <form class="login-form">
+            <div class="form-group">
+                <label for="exampleInputEmail1">Email address</label>
+                <input type="email" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp"
+                       placeholder="Enter email">
+                <small id="emailHelp" class="form-text text-muted">We'll never share your email with anyone
+                    else.</small>
+            </div>
+            <div class="form-group">
+                <label for="exampleInputPassword1">Password</label>
+                <input type="password" class="form-control" id="exampleInputPassword1" placeholder="Password">
+            </div>
+            <button class="btn btn-primary" v-on:click="authorize($event)">Submit</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    var app = new Vue({
+        el: '#app-2',
+        data: {
+            isLogged: false,
+            user: null
+        },
+        methods: {
+            authorize: function (e) {
+                e.preventDefault();
+                this.isLogged = true;
+                this.user = {
+                    name: 'Иванов иван'
+                }
+            }
+        }
+    })
+</script>
+</body>
+</html>
