@@ -59,19 +59,17 @@ type DisplayUserDto struct {
 	Name    string `json:"name"`
 	Surname string `json:"surname"`
 	Page    Page   `json:"page"`
-	//Avatar  string `json:"avatar"`
 }
 
 // DTO для регистрации пользователя
 type SignupDto struct {
-	Credentials
-	Name        string    `json:"name" binding:"required"`
-	Surname     string    `json:"surname" binding:"required"`
-	DateOfBirth time.Time `json:"dateOfBirth" binding:"required"`
-	Gender      string    `json:"gender" binding:"required"`
+	Credentials `validate:"dive,required"`
+	Name        string    `json:"name" validate:"required"`
+	Surname     string    `json:"surname" validate:"required"`
+	DateOfBirth time.Time `json:"dateOfBirth" validate:"required"`
+	Gender      string    `json:"gender" validate:"required,oneof=м ж"`
 	Interests   []string  `json:"interests"`
-	CityId      IntId     `json:"cityId" binding:"required"`
-	//	AvatarFile  string    `json:"avatar"`
+	CityId      IntId     `json:"cityId" validate:"required"`
 }
 
 func (dto SignupDto) ToUserWithPassword() *UserWithPassword {

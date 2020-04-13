@@ -5,6 +5,7 @@ import (
 	"github.com/dmitrymatviets/myhood/core/contract"
 	"github.com/dmitrymatviets/myhood/core/model"
 	"github.com/dmitrymatviets/myhood/pkg"
+	"github.com/go-playground/validator/v10"
 )
 
 type AuthService struct {
@@ -18,11 +19,16 @@ func (as *AuthService) SignUp(ctx context.Context, dto model.SignupDto) (model.S
 		return "", nil, err
 	}
 
-	//дублирование емейлов
-	session, user, err := as.userRepo.SignUp(ctx, dto)
+	existingUserForEmail, err := as.userRepo.GetByEmail(ctx, dto.Email)
 	if err != nil {
 		return "", nil, err
 	}
+
+	if existingUserForEmail != nil {
+		return "", nil, pkg.NewPublicError("Уже зарегистрирован пользователь с данным email")
+	}
+
+	return as.userRepo.SignUp(ctx, dto.ToUserWithPassword())
 }
 
 func (as *AuthService) Login(ctx context.Context, credentials model.Credentials) (model.Session, error) {
@@ -37,10 +43,11 @@ func (as *AuthService) Logout(ctx context.Context, sessionId model.Session) erro
 	panic("implement me")
 }
 
-func (as *AuthService) validateSignupDto(ctx context.Context, dto model.SignupDto) *pkg.PublicError {
-	// TODO
-	// валидация
-	// https://github.com/gin-gonic/gin/issues/2167
+func (as *AuthService) validateSignupDto(ctx context.Context, dto model.SignupDto) error {
+	err := validator.New().Struct(dto)
+	if err != nil {
+		return pkg.NewPublicError("Ошибка валидации "+err.Error(), err)
+	}
 
 	city, err := as.cityRepo.GetById(ctx, dto.CityId)
 	if city == nil {
