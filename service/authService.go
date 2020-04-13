@@ -18,6 +18,7 @@ func (as *AuthService) SignUp(ctx context.Context, dto model.SignupDto) (model.S
 		return "", nil, err
 	}
 
+	//дублирование емейлов
 	session, user, err := as.userRepo.SignUp(ctx, dto)
 	if err != nil {
 		return "", nil, err

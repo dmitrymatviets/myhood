@@ -2,11 +2,13 @@ package user
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"github.com/dmitrymatviets/myhood/core/contract"
 	"github.com/dmitrymatviets/myhood/core/model"
 	"github.com/dmitrymatviets/myhood/infrastructure/database"
 	"github.com/dmitrymatviets/myhood/pkg"
+	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 	"time"
 )
@@ -75,11 +77,28 @@ func (ur *MssqlUserRepository) Authenticate(ctx context.Context, credentials mod
 }
 
 func (ur *MssqlUserRepository) GetUserIdBySession(ctx context.Context, sessionId model.Session) (model.IntId, error) {
-	panic("implement me")
+	var userId model.IntId
+	err := ur.db.GetContext(ctx, &userId,
+		`select user_id 
+                 from sessions 
+                where session_id = ?`,
+		sessionId)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return userId, nil
+		}
+		return userId, pkg.NewPublicError("Ошибка проверки сессии", err)
+	}
+	return userId, nil
 }
 
 func (ur *MssqlUserRepository) Logout(ctx context.Context, sessionId model.Session) error {
-	panic("implement me")
+	_, err := ur.db.ExecContext(ctx,
+		`delete
+                 from sessions
+                where session_id = ?`,
+		sessionId)
+	return err
 }
 
 func (ur *MssqlUserRepository) GetById(ctx context.Context, id model.IntId) (*model.User, error) {
@@ -100,6 +119,9 @@ func (ur *MssqlUserRepository) GetById(ctx context.Context, id model.IntId) (*mo
 		id)
 
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
 		return nil, pkg.NewPublicError("Ошибка получения пользователя", err)
 	}
 
@@ -107,19 +129,126 @@ func (ur *MssqlUserRepository) GetById(ctx context.Context, id model.IntId) (*mo
 }
 
 func (ur *MssqlUserRepository) GetByEmail(ctx context.Context, email string) (*model.User, error) {
-	panic("implement me")
+	dtoUser := userDto{}
+	err := ur.db.TxOrDbFromContext(ctx).GetContext(ctx, &dtoUser,
+		`select user_id
+                     , email
+                     , name
+                     , surname
+                     , date_of_birth
+                     , gender
+                     , interests
+                     , city_id
+                     , page_slug
+                     , page_is_private     
+                  from users     
+                 where email = ?`,
+		email)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, pkg.NewPublicError("Ошибка получения пользователя", err)
+	}
+
+	return dtoUser.toUser(), nil
 }
 
 func (ur *MssqlUserRepository) GetByIds(ctx context.Context, ids []model.IntId) ([]*model.User, error) {
-	panic("implement me")
+	dtoUsers := make([]userDto, 0)
+
+	query, args, err := sqlx.In(`select user_id
+	, email
+	, name
+	, surname
+	, date_of_birth
+	, gender
+	, interests
+	, city_id
+	, page_slug
+	, page_is_private
+	from users
+	where user_id in (?)`, ids)
+
+	if err != nil {
+		return nil, pkg.NewPublicError("Ошибка запроса", err)
+	}
+
+	// sqlx.In returns queries with the `?` bindvar, we can rebind it for our backend
+	query = ur.db.Rebind(query)
+
+	err = ur.db.TxOrDbFromContext(ctx).SelectContext(ctx, &dtoUsers,
+		query,
+		args...)
+
+	if err != nil {
+		return nil, pkg.NewPublicError("Ошибка получения пользователей", err)
+	}
+
+	result := make([]*model.User, 0, len(dtoUsers))
+	for _, dto := range dtoUsers {
+		result = append(result, dto.toUser())
+	}
+
+	return result, nil
 }
 
 func (ur *MssqlUserRepository) GetFriends(ctx context.Context, user *model.User) ([]*model.DisplayUserDto, error) {
-	panic("implement me")
+	dtoUsers := make([]*model.DisplayUserDto, 0)
+
+	err := ur.db.TxOrDbFromContext(ctx).SelectContext(ctx, &dtoUsers,
+		`select user_id
+                    , name
+	                , surname
+	                , page_slug
+	                , page_is_private
+	             from users u
+                 join friends f on u.user_id = f.friend_id 
+                               and f.user_id = ?`,
+		user.Id)
+
+	if err != nil {
+		return nil, pkg.NewPublicError("Ошибка получения друзей", err)
+	}
+
+	return dtoUsers, nil
 }
 
 func (ur *MssqlUserRepository) SaveUser(ctx context.Context, user *model.User) (*model.User, error) {
-	panic("implement me")
+	interestsJson, _ := json.Marshal(user.Interests)
+
+	_, err := ur.db.TxOrDbFromContext(ctx).ExecContext(ctx,
+		`update users
+                  set email = ?
+                    , name = ?
+                    , surname = ?
+                    , date_of_birth = ?
+                    , interests = ?
+                    , city_id = ?
+                    , page_slug = ?
+                    , page_is_private = ?
+                where id = ?`,
+		user.Email,
+		user.Name,
+		user.Surname,
+		user.DateOfBirth,
+		interestsJson,
+		user.CityId,
+		user.Page.Slug,
+		user.Page.IsPrivate,
+	)
+
+	if err != nil {
+		return nil, pkg.NewPublicError("Ошибка изменения пользователя", errors.WithStack(err))
+	}
+
+	user, err = ur.GetById(ctx, user.Id)
+	if err != nil {
+		return nil, pkg.NewPublicError("Ошибка завершения изменения пользователя", errors.WithStack(err))
+	}
+
+	return user, nil
 }
 
 func (ur *MssqlUserRepository) createUser(ctx context.Context, user *model.UserWithPassword) (*model.User, error) {
