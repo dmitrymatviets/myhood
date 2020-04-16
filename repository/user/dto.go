@@ -21,7 +21,7 @@ type userDto struct {
 
 func newUserDtoFromUser(u *model.User) userDto {
 	interestsJson, err := json.Marshal(u.Interests)
-	if err != nil {
+	if err != nil || u.Interests == nil {
 		interestsJson = []byte("[]")
 	}
 

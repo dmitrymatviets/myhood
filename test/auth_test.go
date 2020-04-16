@@ -55,7 +55,7 @@ func getValidSignupDto() model.SignupDto {
 func TestSignup_ValidSignupDto_CreatesUser(t *testing.T) {
 	as := getAuthService()
 	session, user, err := as.SignUp(context.Background(), getValidSignupDto())
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 	assert.NotEmpty(t, session)
 	assert.NotNil(t, user)
 }
@@ -170,4 +170,26 @@ func TestSignup_BadCity_Fails(t *testing.T) {
 	assert.Nil(t, user)
 	assert.Contains(t, err.Error(), "Ошибка валидации")
 	fmt.Println(err)
+}
+
+func TestSignup_BadGender_Fails(t *testing.T) {
+	as := getAuthService()
+	dto1 := getValidSignupDto()
+	dto1.Gender = `E`
+	session, user, err := as.SignUp(context.Background(), dto1)
+	assert.NotNil(t, err)
+	assert.Empty(t, session)
+	assert.Nil(t, user)
+	assert.Contains(t, err.Error(), "Ошибка валидации")
+	fmt.Println(err)
+}
+
+func TestSignup_NoInterest_Succeeds(t *testing.T) {
+	as := getAuthService()
+	dto1 := getValidSignupDto()
+	dto1.Interests = nil
+	session, user, err := as.SignUp(context.Background(), dto1)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, session)
+	assert.NotNil(t, user)
 }
