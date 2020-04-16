@@ -20,14 +20,18 @@ type Config struct {
 func Load() (dbCfg database.DatabaseConfig, serverCfg config.ServerConfig, loggerCfg logger.LoggerConfig, err error) {
 	wd, _ := os.Getwd()
 	envPath := ".env"
+	isTestMode := false
 	if strings.HasSuffix(wd, "test") {
 		envPath = "./../.env"
+		isTestMode = true
 	}
 	godotenv.Load(envPath)
 
-	log.Println("Env variables:")
-	for _, environ := range os.Environ() {
-		log.Println(environ)
+	if !isTestMode {
+		log.Println("Env variables:")
+		for _, environ := range os.Environ() {
+			log.Println(environ)
+		}
 	}
 
 	cfg := &Config{}
@@ -35,7 +39,9 @@ func Load() (dbCfg database.DatabaseConfig, serverCfg config.ServerConfig, logge
 		return
 	}
 
-	log.Printf("Config: %+v\n", cfg)
+	if !isTestMode {
+		log.Printf("Config: %+v\n", cfg)
+	}
 
 	return cfg.Database, cfg.Server, cfg.Logger, nil
 }

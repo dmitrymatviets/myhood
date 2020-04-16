@@ -74,8 +74,8 @@ type UserWithPassword struct {
 
 // DTO для аутентификации
 type Credentials struct {
-	Email    string `json:"email" binding:"required"`
-	Password string `json:"password" binding:"required"`
+	Email    string `json:"email" validate:"required"`
+	Password string `json:"password" validate:"required"`
 }
 
 // идентификатор сессии

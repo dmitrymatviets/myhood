@@ -11,16 +11,18 @@ import (
 	"github.com/dmitrymatviets/myhood/repository/city"
 	"github.com/dmitrymatviets/myhood/repository/user"
 	"github.com/dmitrymatviets/myhood/service"
-	"github.com/stretchr/testify/assert"
+	assert "github.com/stretchr/testify/require"
 	"go.uber.org/fx"
 	rand2 "math/rand"
 	"testing"
 	"time"
 )
 
+var authService contract.IAuthService
+
 func getAuthService() contract.IAuthService {
-	var authService contract.IAuthService
 	fx.New(
+		fx.NopLogger,
 		fx.Provide(
 			config.Load,
 			database.NewDatabase,
@@ -71,6 +73,7 @@ func TestSignup_DuplicatedEmail_Fails(t *testing.T) {
 	assert.NotNil(t, err)
 	assert.Empty(t, session)
 	assert.Nil(t, user)
+	fmt.Println(err)
 }
 
 func TestSignup_NoEmail_Fails(t *testing.T) {
@@ -81,6 +84,8 @@ func TestSignup_NoEmail_Fails(t *testing.T) {
 	assert.NotNil(t, err)
 	assert.Empty(t, session)
 	assert.Nil(t, user)
+	assert.Contains(t, err.Error(), "Ошибка валидации")
+	fmt.Println(err)
 }
 
 func TestSignup_NoPass_Fails(t *testing.T) {
@@ -91,4 +96,78 @@ func TestSignup_NoPass_Fails(t *testing.T) {
 	assert.NotNil(t, err)
 	assert.Empty(t, session)
 	assert.Nil(t, user)
+	assert.Contains(t, err.Error(), "Ошибка валидации")
+	fmt.Println(err)
+}
+
+func TestSignup_NoName_Fails(t *testing.T) {
+	as := getAuthService()
+	dto1 := getValidSignupDto()
+	dto1.Name = ""
+	session, user, err := as.SignUp(context.Background(), dto1)
+	assert.NotNil(t, err)
+	assert.Empty(t, session)
+	assert.Nil(t, user)
+	assert.Contains(t, err.Error(), "Ошибка валидации")
+	fmt.Println(err)
+}
+
+func TestSignup_NoSurname_Fails(t *testing.T) {
+	as := getAuthService()
+	dto1 := getValidSignupDto()
+	dto1.Surname = ""
+	session, user, err := as.SignUp(context.Background(), dto1)
+	assert.NotNil(t, err)
+	assert.Empty(t, session)
+	assert.Nil(t, user)
+	assert.Contains(t, err.Error(), "Ошибка валидации")
+	fmt.Println(err)
+}
+
+func TestSignup_NoDateOfBirth_Fails(t *testing.T) {
+	as := getAuthService()
+	dto1 := getValidSignupDto()
+	dto1.DateOfBirth = time.Time{}
+	session, user, err := as.SignUp(context.Background(), dto1)
+	assert.NotNil(t, err)
+	assert.Empty(t, session)
+	assert.Nil(t, user)
+	assert.Contains(t, err.Error(), "Ошибка валидации")
+	fmt.Println(err)
+}
+
+func TestSignup_TooBigDateOfBirth_Fails(t *testing.T) {
+	as := getAuthService()
+	dto1 := getValidSignupDto()
+	dto1.DateOfBirth = time.Now().AddDate(-3, 0, 0)
+	session, user, err := as.SignUp(context.Background(), dto1)
+	assert.NotNil(t, err)
+	assert.Empty(t, session)
+	assert.Nil(t, user)
+	assert.Contains(t, err.Error(), "Ошибка валидации")
+	fmt.Println(err)
+}
+
+func TestSignup_TooSmallDateOfBirth_Fails(t *testing.T) {
+	as := getAuthService()
+	dto1 := getValidSignupDto()
+	dto1.DateOfBirth = time.Now().AddDate(-150, 0, 0)
+	session, user, err := as.SignUp(context.Background(), dto1)
+	assert.NotNil(t, err)
+	assert.Empty(t, session)
+	assert.Nil(t, user)
+	assert.Contains(t, err.Error(), "Ошибка валидации")
+	fmt.Println(err)
+}
+
+func TestSignup_BadCity_Fails(t *testing.T) {
+	as := getAuthService()
+	dto1 := getValidSignupDto()
+	dto1.CityId = 666666
+	session, user, err := as.SignUp(context.Background(), dto1)
+	assert.NotNil(t, err)
+	assert.Empty(t, session)
+	assert.Nil(t, user)
+	assert.Contains(t, err.Error(), "Ошибка валидации")
+	fmt.Println(err)
 }

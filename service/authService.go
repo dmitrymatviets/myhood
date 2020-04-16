@@ -6,6 +6,7 @@ import (
 	"github.com/dmitrymatviets/myhood/core/model"
 	"github.com/dmitrymatviets/myhood/pkg"
 	"github.com/go-playground/validator/v10"
+	"time"
 )
 
 type AuthService struct {
@@ -57,9 +58,17 @@ func (as *AuthService) validateSignupDto(ctx context.Context, dto model.SignupDt
 		return pkg.NewPublicError("Ошибка валидации "+err.Error(), err)
 	}
 
+	if dto.DateOfBirth.After(time.Now().AddDate(-6, 0, 0)) {
+		return pkg.NewPublicError("Ошибка валидации: регистрация возможна с 6 лет", err)
+	}
+
+	if dto.DateOfBirth.Before(time.Now().AddDate(-120, 0, 0)) {
+		return pkg.NewPublicError("Ошибка валидации: некорректная дата", err)
+	}
+
 	city, err := as.cityRepo.GetById(ctx, dto.CityId)
 	if city == nil {
-		return pkg.NewPublicError("Неверный город")
+		return pkg.NewPublicError("Ошибка валидации: неверный город")
 	}
 	if err != nil {
 		return pkg.NewPublicError("Ошибка проверки города", err)
