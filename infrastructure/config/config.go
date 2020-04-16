@@ -8,6 +8,7 @@ import (
 	"github.com/kelseyhightower/envconfig"
 	"log"
 	"os"
+	"strings"
 )
 
 type Config struct {
@@ -17,7 +18,12 @@ type Config struct {
 }
 
 func Load() (dbCfg database.DatabaseConfig, serverCfg config.ServerConfig, loggerCfg logger.LoggerConfig, err error) {
-	godotenv.Load()
+	wd, _ := os.Getwd()
+	envPath := ".env"
+	if strings.HasSuffix(wd, "test") {
+		envPath = "./../.env"
+	}
+	godotenv.Load(envPath)
 
 	log.Println("Env variables:")
 	for _, environ := range os.Environ() {

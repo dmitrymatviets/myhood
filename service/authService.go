@@ -39,7 +39,7 @@ func (as *AuthService) SignUp(ctx context.Context, dto model.SignupDto) (model.S
 	return as.userRepo.SignUp(ctx, dto.ToUserWithPassword())
 }
 
-func (as *AuthService) Login(ctx context.Context, credentials model.Credentials) (model.Session, error) {
+func (as *AuthService) Login(ctx context.Context, credentials model.Credentials) (model.Session, *model.User, error) {
 	panic("implement me")
 }
 

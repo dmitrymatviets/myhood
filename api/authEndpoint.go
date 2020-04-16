@@ -65,7 +65,7 @@ func (e *AuthEndpoint) LoginV1(ctx *gin.Context) {
 		if err != nil {
 			return nil, err
 		}
-		return dto.SignupResponse{
+		return dto.LoginResponse{
 			Session: session,
 			User:    user,
 		}, nil
@@ -73,9 +73,23 @@ func (e *AuthEndpoint) LoginV1(ctx *gin.Context) {
 }
 
 func (e *AuthEndpoint) LogoutV1(ctx *gin.Context) {
-
+	var requestDto dto.LogoutRequest
+	e.ApiMethod(ctx, requestDto, func() (interface{}, error) {
+		err := e.authService.Logout(ctx, requestDto.Session)
+		if err != nil {
+			return nil, err
+		}
+		return dto.LogoutResponse{}, nil
+	})
 }
 
 func (e *AuthEndpoint) CheckSessionV1(ctx *gin.Context) {
-
+	var requestDto dto.LogoutRequest
+	e.ApiMethod(ctx, requestDto, func() (interface{}, error) {
+		user, err := e.authService.GetUserBySession(ctx, requestDto.Session)
+		if err != nil {
+			return nil, err
+		}
+		return dto.CheckSessionResponse{User: user}, nil
+	})
 }

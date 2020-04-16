@@ -8,5 +8,5 @@ type SignupRequest struct {
 
 type SignupResponse struct {
 	Session model.Session `json:"session"`
-	User    *model.User   `json:"user"`
+	User    *model.User
 }
