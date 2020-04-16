@@ -3,10 +3,9 @@ package middleware
 import (
 	"bytes"
 	"fmt"
-	"github.com/dmitrymatviets/myhood/infrastructure/constants"
+	config2 "github.com/dmitrymatviets/myhood/infrastructure/config"
 	"github.com/dmitrymatviets/myhood/infrastructure/logger"
 	config "github.com/dmitrymatviets/myhood/infrastructure/server/config"
-	"github.com/dmitrymatviets/myhood/infrastructure/tracing"
 	"io/ioutil"
 	"net/http/httputil"
 	"runtime"
@@ -40,9 +39,7 @@ func RecoveryWithWriter(cfg *config.ServerConfig, logger *logger.Logger, tracer 
 
 				err = ctx.Error(fmt.Errorf("%s", err))
 
-				tracing.SetError(ctx, err.(error))
-
-				ctx.Set(constants.KeyResponse, err)
+				ctx.Set(config2.CtxKeyResponse, err)
 				sendDecoratedJsonResponse(ctx, cfg, logger)
 
 				ctx.Abort()

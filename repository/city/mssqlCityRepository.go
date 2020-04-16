@@ -18,9 +18,10 @@ func NewMssqlCityRepository(db *database.Database) contract.ICityRepository {
 
 func (cr *MssqlCityRepository) GetCities(ctx context.Context) ([]*model.City, error) {
 	cities := make([]*model.City, 0)
-	err := cr.db.SelectContext(ctx, &cities, `SELECT city_id
-                                              , name 
-                                           FROM cities`)
+	err := cr.db.TxOrDbFromContext(ctx).SelectContext(ctx, &cities,
+		`SELECT city_id
+                    , name 
+                 FROM cities`)
 	if err != nil {
 		return nil, err
 	}
@@ -29,10 +30,12 @@ func (cr *MssqlCityRepository) GetCities(ctx context.Context) ([]*model.City, er
 
 func (cr *MssqlCityRepository) GetById(ctx context.Context, id model.IntId) (*model.City, error) {
 	var city model.City
-	err := cr.db.GetContext(ctx, &city, `SELECT city_id
-                                              , name 
-                                       FROM cities
-                                      WHERE city_id = ?`, id)
+	err := cr.db.TxOrDbFromContext(ctx).GetContext(ctx, &city,
+		`SELECT city_id
+                    , name 
+                 FROM cities
+                WHERE city_id = ?`,
+		id)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil

@@ -3,17 +3,14 @@ package user
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"github.com/dmitrymatviets/myhood/core/contract"
 	"github.com/dmitrymatviets/myhood/core/model"
+	"github.com/dmitrymatviets/myhood/infrastructure/config"
 	"github.com/dmitrymatviets/myhood/infrastructure/database"
 	"github.com/dmitrymatviets/myhood/pkg"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
-	"time"
 )
-
-const hashSalt = "myhood_93284203948092384767709324890128309128!@#!@#!@$%%^^^"
 
 type MssqlUserRepository struct {
 	db *database.Database
@@ -78,7 +75,7 @@ func (ur *MssqlUserRepository) Authenticate(ctx context.Context, credentials mod
 
 func (ur *MssqlUserRepository) GetUserIdBySession(ctx context.Context, sessionId model.Session) (model.IntId, error) {
 	var userId model.IntId
-	err := ur.db.GetContext(ctx, &userId,
+	err := ur.db.TxOrDbFromContext(ctx).GetContext(ctx, &userId,
 		`select user_id 
                  from sessions 
                 where session_id = ?`,
@@ -93,7 +90,7 @@ func (ur *MssqlUserRepository) GetUserIdBySession(ctx context.Context, sessionId
 }
 
 func (ur *MssqlUserRepository) Logout(ctx context.Context, sessionId model.Session) error {
-	_, err := ur.db.ExecContext(ctx,
+	_, err := ur.db.TxOrDbFromContext(ctx).ExecContext(ctx,
 		`delete
                  from sessions
                 where session_id = ?`,
@@ -158,18 +155,20 @@ func (ur *MssqlUserRepository) GetByEmail(ctx context.Context, email string) (*m
 func (ur *MssqlUserRepository) GetByIds(ctx context.Context, ids []model.IntId) ([]*model.User, error) {
 	dtoUsers := make([]userDto, 0)
 
-	query, args, err := sqlx.In(`select user_id
-	, email
-	, name
-	, surname
-	, date_of_birth
-	, gender
-	, interests
-	, city_id
-	, page_slug
-	, page_is_private
-	from users
-	where user_id in (?)`, ids)
+	query, args, err := sqlx.In(
+		`select user_id
+	                , email
+	                , name
+	                , surname
+	                , date_of_birth
+	                , gender
+	                , interests
+	                , city_id
+	                , page_slug
+	                , page_is_private
+	             from users
+	            where user_id in (?)`,
+		ids)
 
 	if err != nil {
 		return nil, pkg.NewPublicError("Ошибка запроса", err)
@@ -209,14 +208,14 @@ func (ur *MssqlUserRepository) GetFriends(ctx context.Context, user *model.User)
 		user.Id)
 
 	if err != nil {
-		return nil, pkg.NewPublicError("Ошибка получения друзей", err)
+		return nil, pkg.NewPublicError("Ошибка получения списка друзей", err)
 	}
 
 	return dtoUsers, nil
 }
 
 func (ur *MssqlUserRepository) SaveUser(ctx context.Context, user *model.User) (*model.User, error) {
-	interestsJson, _ := json.Marshal(user.Interests)
+	dtoUser := newUserDtoFromUser(user)
 
 	_, err := ur.db.TxOrDbFromContext(ctx).ExecContext(ctx,
 		`update users
@@ -229,14 +228,14 @@ func (ur *MssqlUserRepository) SaveUser(ctx context.Context, user *model.User) (
                     , page_slug = ?
                     , page_is_private = ?
                 where id = ?`,
-		user.Email,
-		user.Name,
-		user.Surname,
-		user.DateOfBirth,
-		interestsJson,
-		user.CityId,
-		user.Page.Slug,
-		user.Page.IsPrivate,
+		dtoUser.Email,
+		dtoUser.Name,
+		dtoUser.Surname,
+		dtoUser.DateOfBirth,
+		dtoUser.Interests,
+		dtoUser.CityId,
+		dtoUser.PageSlug,
+		dtoUser.PageIsPrivate,
 	)
 
 	if err != nil {
@@ -251,21 +250,52 @@ func (ur *MssqlUserRepository) SaveUser(ctx context.Context, user *model.User) (
 	return user, nil
 }
 
+func (ur *MssqlUserRepository) AddFriend(ctx context.Context, user *model.User, friend *model.User) error {
+	_, err := ur.db.TxOrDbFromContext(ctx).ExecContext(ctx,
+		`insert into friends(user_id, friend_id) 
+                            values(?, ?)`,
+		user.Id,
+		friend.Id,
+	)
+
+	if err != nil {
+		return pkg.NewPublicError("Ошибка добавления в друзья", errors.WithStack(err))
+	}
+	return nil
+}
+
+func (ur *MssqlUserRepository) RemoveFriend(ctx context.Context, user *model.User, friend *model.User) error {
+	_, err := ur.db.TxOrDbFromContext(ctx).ExecContext(ctx,
+		`delete 
+                 from friends 
+                where user_id   = ?
+                  and friend_id = ?`,
+		user.Id,
+		friend.Id,
+	)
+
+	if err != nil {
+		return pkg.NewPublicError("Ошибка удаления из друзей", errors.WithStack(err))
+	}
+	return nil
+}
+
 func (ur *MssqlUserRepository) createUser(ctx context.Context, user *model.UserWithPassword) (*model.User, error) {
+	userDto := newUserDtoFromUser(user.User)
 
-	interestsJson, _ := json.Marshal(user.Interests)
-
-	result, err := ur.db.TxOrDbFromContext(ctx).ExecContext(ctx, `insert into users(email, hash, name, surname, date_of_birth, gender, interests, city_id, page_slug, page_is_private) 
-                                                  values (?, md5(?), ?, ?, ?, ?, ?, ?, ? , ?)`,
-		user.Email,
-		hashSalt+user.Password,
-		user.Name,
-		user.Surname,
-		user.DateOfBirth,
-		user.Gender,
-		interestsJson,
-		user.CityId,
-		user.Page.Slug,
+	result, err := ur.db.TxOrDbFromContext(ctx).ExecContext(ctx,
+		`insert into users(email, hash, name, surname, date_of_birth, gender, interests, city_id, page_slug, page_is_private) 
+                          values(?, md5(concat(?, ?)), ?, ?, ?, ?, ?, ?, ? , ?)`,
+		userDto.Email,
+		config.HashSalt,
+		user.Password,
+		userDto.Name,
+		userDto.Surname,
+		userDto.DateOfBirth,
+		userDto.Gender,
+		userDto.Interests,
+		userDto.CityId,
+		userDto.PageSlug,
 		false,
 	)
 
@@ -287,9 +317,11 @@ func (ur *MssqlUserRepository) authenticateInternal(ctx context.Context, credent
 	var userId model.IntId
 	err := ur.db.TxOrDbFromContext(ctx).GetContext(ctx, &userId,
 		`select user_id from users
-                where email = ? and hash = md5(?)`,
+                where email = ? 
+                  and hash = md5(concat(?, ?))`,
 		credentials.Email,
-		hashSalt+credentials.Password,
+		config.HashSalt,
+		credentials.Password,
 	)
 
 	if err != nil {
@@ -313,39 +345,4 @@ func (ur *MssqlUserRepository) startSession(ctx context.Context, userId model.In
 	}
 
 	return sessionId, nil
-}
-
-type userDto struct {
-	Id            model.IntId `db:"user_id"`
-	Email         string      `db:"email"`
-	Name          string      `db:"name"`
-	Surname       string      `db:"surname"`
-	DateOfBirth   time.Time   `db:"date_of_birth"`
-	Gender        string      `db:"gender"`
-	Interests     string      `db:"interests"`
-	CityId        model.IntId `db:"city_id"`
-	PageSlug      string      `db:"page_slug"`
-	PageIsPrivate bool        `db:"page_is_private"`
-	//TODO
-	FriendIds []model.IntId
-}
-
-func (u userDto) toUser() *model.User {
-	interests := make([]string, 0)
-	_ = json.Unmarshal([]byte(u.Interests), &interests)
-
-	return &model.User{
-		Id:          u.Id,
-		Email:       u.Email,
-		Name:        u.Name,
-		Surname:     u.Surname,
-		DateOfBirth: u.DateOfBirth,
-		Gender:      u.Gender,
-		Interests:   interests,
-		CityId:      u.CityId,
-		Page: model.Page{
-			Slug:      u.PageSlug,
-			IsPrivate: u.PageIsPrivate,
-		},
-	}
 }

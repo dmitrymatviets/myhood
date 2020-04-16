@@ -17,27 +17,7 @@ type User struct {
 	Interests   []string  `json:"interests"`
 	CityId      IntId     `json:"cityId"`
 	Page        Page      `json:"page"`
-	//TODO
-	FriendIds []IntId `json:"friends"`
 	//Avatar      string    `json:"avatar"`
-}
-
-func (u *User) AddFriend(friend *User) {
-	for _, friendId := range u.FriendIds {
-		if friendId == friend.Id {
-			return
-		}
-	}
-	u.FriendIds = append(u.FriendIds, friend.Id)
-}
-
-func (u *User) RemoveFriend(friend *User) {
-	for id, friendId := range u.FriendIds {
-		if friendId == friend.Id {
-			u.FriendIds = append(u.FriendIds[:id], u.FriendIds[id+1:]...)
-			return
-		}
-	}
 }
 
 func (u *User) SetPage(page Page) {

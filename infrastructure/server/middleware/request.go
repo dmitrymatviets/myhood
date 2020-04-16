@@ -1,13 +1,12 @@
 package middleware
 
 import (
-	"github.com/dmitrymatviets/myhood/infrastructure/constants"
+	"github.com/dmitrymatviets/myhood/infrastructure/config"
 	"github.com/dmitrymatviets/myhood/infrastructure/server/protocol"
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
 
 	"github.com/dmitrymatviets/myhood/infrastructure/logger"
-	"github.com/dmitrymatviets/myhood/infrastructure/tracing"
 )
 
 func RequestMiddleware(logger *logger.Logger) gin.HandlerFunc {
@@ -21,23 +20,20 @@ func RequestMiddleware(logger *logger.Logger) gin.HandlerFunc {
 			logger.Error(ctx, err.Error())
 
 			_ = ctx.Error(err)
-			ctx.Set(constants.KeyResponse, err)
+			ctx.Set(config.CtxKeyResponse, err)
 
 			return
 		}
 
-		ctx.Set(constants.KeyMeta, req.Meta)
-		ctx.Set(constants.KeyRequest, req.Data)
+		ctx.Set(config.CtxKeyMeta, req.Meta)
+		ctx.Set(config.CtxKeyRequestId, req.Data)
 
 		requestString := req.Data
 
-		logger.Info(ctx, "merchsheet incoming request",
+		logger.Info(ctx, "request",
 			"url", ctx.Request.RequestURI,
 			"headers", ctx.Request.Header,
-			//TODO обрезка
 			"body", requestString)
-
-		tracing.SetValue(ctx, constants.KeyRequest, requestString)
 
 		ctx.Next()
 	}

@@ -42,10 +42,12 @@ type IUserRepository interface {
 	GetByEmail(ctx context.Context, email string) (*model.User, error)
 	// получение нескольких пользователей по id
 	GetByIds(ctx context.Context, ids []model.IntId) ([]*model.User, error)
-	// получение списка друзей
-	GetFriends(ctx context.Context, user *model.User) ([]*model.DisplayUserDto, error)
 	// сохранение пользователя
 	SaveUser(ctx context.Context, user *model.User) (*model.User, error)
+	// добавление друга
+	AddFriend(ctx context.Context, user *model.User, friend *model.User) error
+	// удаление друга
+	RemoveFriend(ctx context.Context, user *model.User, friend *model.User) error
 }
 
 type ICityRepository interface {

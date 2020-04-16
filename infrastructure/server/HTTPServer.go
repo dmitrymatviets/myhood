@@ -15,7 +15,6 @@ import (
 )
 
 func init() {
-	gin.DisableConsoleColor()
 	gin.SetMode(gin.ReleaseMode)
 }
 

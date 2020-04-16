@@ -17,7 +17,7 @@ type Request struct {
 
 func NewRequest(data interface{}) *Request {
 	metaJson, _ := json.Marshal(map[string]interface{}{
-		"from": "merchsheet",
+		"from": "myhood",
 	})
 	dataJson, _ := json.Marshal(data)
 	return &Request{
@@ -33,10 +33,8 @@ type ResponseSuccess struct {
 }
 
 type RError struct {
-	Message     string   `json:"message" binding:"required"`
-	Code        string   `json:"code" binding:"required"`
-	Description string   `json:"description" binding:"required"`
-	StackTrace  []string `json:"stackTrace,omitempty" binding:"required"`
+	Message string `json:"message" binding:"required"`
+	Code    string `json:"code" binding:"required"`
 }
 
 type ResponseError struct {
