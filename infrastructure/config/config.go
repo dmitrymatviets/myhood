@@ -2,30 +2,21 @@ package config
 
 import (
 	"github.com/dmitrymatviets/myhood/infrastructure/database"
+	"github.com/dmitrymatviets/myhood/infrastructure/logger"
+	"github.com/dmitrymatviets/myhood/infrastructure/server/config"
 	"github.com/joho/godotenv"
 	"github.com/kelseyhightower/envconfig"
 	"log"
 	"os"
 )
 
-const (
-	HashSalt        = "myhood_93284203948092384767709324890128309128!@#!@#!@$%%^^^"
-	CtxKeyRequestId = "requestId"
-	CtxKeyResponse  = "response"
-	CtxKeyMeta      = "meta"
-)
-
 type Config struct {
 	Database database.DatabaseConfig `envconfig:"db"`
-	/*
-		Server  config.ServerConfig   `envconfig:"server"`
-		Options OptionsConfig         `envconfig:"options"`
-	*/
+	Server   config.ServerConfig     `envconfig:"server"`
+	Logger   logger.LoggerConfig     `envconfig:"logger"`
 }
 
-type OptionsConfig struct{}
-
-func Load() (dbCfg database.DatabaseConfig, err error) {
+func Load() (dbCfg database.DatabaseConfig, serverCfg config.ServerConfig, loggerCfg logger.LoggerConfig, err error) {
 	godotenv.Load()
 
 	log.Println("Env variables:")
@@ -40,5 +31,5 @@ func Load() (dbCfg database.DatabaseConfig, err error) {
 
 	log.Printf("Config: %+v\n", cfg)
 
-	return cfg.Database, nil
+	return cfg.Database, cfg.Server, cfg.Logger, nil
 }

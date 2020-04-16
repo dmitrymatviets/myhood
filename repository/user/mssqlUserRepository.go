@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"github.com/dmitrymatviets/myhood/core/contract"
 	"github.com/dmitrymatviets/myhood/core/model"
-	"github.com/dmitrymatviets/myhood/infrastructure/config"
+	"github.com/dmitrymatviets/myhood/infrastructure"
 	"github.com/dmitrymatviets/myhood/infrastructure/database"
 	"github.com/dmitrymatviets/myhood/pkg"
 	"github.com/jmoiron/sqlx"
@@ -287,7 +287,7 @@ func (ur *MssqlUserRepository) createUser(ctx context.Context, user *model.UserW
 		`insert into users(email, hash, name, surname, date_of_birth, gender, interests, city_id, page_slug, page_is_private) 
                           values(?, md5(concat(?, ?)), ?, ?, ?, ?, ?, ?, ? , ?)`,
 		userDto.Email,
-		config.HashSalt,
+		infrastructure.HashSalt,
 		user.Password,
 		userDto.Name,
 		userDto.Surname,
@@ -320,7 +320,7 @@ func (ur *MssqlUserRepository) authenticateInternal(ctx context.Context, credent
                 where email = ? 
                   and hash = md5(concat(?, ?))`,
 		credentials.Email,
-		config.HashSalt,
+		infrastructure.HashSalt,
 		credentials.Password,
 	)
 

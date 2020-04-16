@@ -5,8 +5,11 @@ import (
 	"github.com/dmitrymatviets/myhood/api"
 	"github.com/dmitrymatviets/myhood/infrastructure/config"
 	"github.com/dmitrymatviets/myhood/infrastructure/database"
+	"github.com/dmitrymatviets/myhood/infrastructure/logger"
+	"github.com/dmitrymatviets/myhood/infrastructure/server"
 	"github.com/dmitrymatviets/myhood/repository/city"
 	"github.com/dmitrymatviets/myhood/repository/user"
+	"github.com/dmitrymatviets/myhood/service"
 	"go.uber.org/fx"
 )
 
@@ -15,8 +18,12 @@ func main() {
 		fx.Provide(
 			config.Load,
 			database.NewDatabase,
+			server.NewHTTPServer,
+			logger.New,
 			city.NewMssqlCityRepository,
 			user.NewMssqlUserRepository,
+			service.NewAuthService,
+			service.NewUserService,
 			api.NewServer,
 		),
 		fx.Invoke(startApp),

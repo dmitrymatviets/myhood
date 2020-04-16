@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/dmitrymatviets/myhood/infrastructure/config"
+	"github.com/dmitrymatviets/myhood/infrastructure"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
@@ -65,8 +65,8 @@ func (log *Logger) Fatal(ctx context.Context, msg string, keysAndValues ...inter
 func (log *Logger) addCtxFields(ctx context.Context, keysAndValues ...interface{}) []interface{} {
 	result := make([]interface{}, 0)
 
-	if requestId, ok := ctx.Value(config.CtxKeyRequestId).(string); ok {
-		result = append(result, config.CtxKeyRequestId, requestId)
+	if requestId, ok := ctx.Value(infrastructure.CtxKeyRequestId).(string); ok {
+		result = append(result, infrastructure.CtxKeyRequestId, requestId)
 	}
 
 	return append(result, keysAndValues...)

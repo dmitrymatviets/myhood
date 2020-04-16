@@ -3,7 +3,7 @@ package middleware
 import (
 	"bytes"
 	"fmt"
-	config2 "github.com/dmitrymatviets/myhood/infrastructure/config"
+	"github.com/dmitrymatviets/myhood/infrastructure"
 	"github.com/dmitrymatviets/myhood/infrastructure/logger"
 	config "github.com/dmitrymatviets/myhood/infrastructure/server/config"
 	"io/ioutil"
@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/opentracing/opentracing-go"
 )
 
 var (
@@ -23,12 +22,12 @@ var (
 )
 
 // RecoveryMiddleware returns a middleware that recovers from any panics and writes a 500 if there was one.
-func RecoveryMiddleware(cfg *config.ServerConfig, logger *logger.Logger, tracer opentracing.Tracer) gin.HandlerFunc {
-	return RecoveryWithWriter(cfg, logger, tracer)
+func RecoveryMiddleware(cfg *config.ServerConfig, logger *logger.Logger) gin.HandlerFunc {
+	return RecoveryWithWriter(cfg, logger)
 }
 
 // RecoveryWithWriter returns a middleware for a given writer that recovers from any panics and writes a 500 if there was one.
-func RecoveryWithWriter(cfg *config.ServerConfig, logger *logger.Logger, tracer opentracing.Tracer) gin.HandlerFunc {
+func RecoveryWithWriter(cfg *config.ServerConfig, logger *logger.Logger) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		defer func() {
 			if err := recover(); err != nil {
@@ -39,7 +38,7 @@ func RecoveryWithWriter(cfg *config.ServerConfig, logger *logger.Logger, tracer 
 
 				err = ctx.Error(fmt.Errorf("%s", err))
 
-				ctx.Set(config2.CtxKeyResponse, err)
+				ctx.Set(infrastructure.CtxKeyResponse, err)
 				sendDecoratedJsonResponse(ctx, cfg, logger)
 
 				ctx.Abort()

@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"github.com/dmitrymatviets/myhood/infrastructure/config"
+	"github.com/dmitrymatviets/myhood/infrastructure"
 	"github.com/dmitrymatviets/myhood/infrastructure/server/protocol"
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
@@ -20,13 +20,13 @@ func RequestMiddleware(logger *logger.Logger) gin.HandlerFunc {
 			logger.Error(ctx, err.Error())
 
 			_ = ctx.Error(err)
-			ctx.Set(config.CtxKeyResponse, err)
+			ctx.Set(infrastructure.CtxKeyResponse, err)
 
 			return
 		}
 
-		ctx.Set(config.CtxKeyMeta, req.Meta)
-		ctx.Set(config.CtxKeyRequestId, req.Data)
+		ctx.Set(infrastructure.CtxKeyMeta, req.Meta)
+		ctx.Set(infrastructure.CtxKeyRequestId, req.Data)
 
 		requestString := req.Data
 

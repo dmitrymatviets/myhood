@@ -13,6 +13,13 @@ type AuthService struct {
 	userRepo contract.IUserRepository
 }
 
+func NewAuthService(cityRepo contract.ICityRepository, userRepo contract.IUserRepository) contract.IAuthService {
+	return &AuthService{
+		cityRepo: cityRepo,
+		userRepo: userRepo,
+	}
+}
+
 func (as *AuthService) SignUp(ctx context.Context, dto model.SignupDto) (model.Session, *model.User, error) {
 	err := as.validateSignupDto(ctx, dto)
 	if err != nil {

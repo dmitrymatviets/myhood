@@ -10,7 +10,6 @@ import (
 	"github.com/dmitrymatviets/myhood/infrastructure/server/config"
 	"github.com/dmitrymatviets/myhood/infrastructure/server/middleware"
 	"github.com/gin-gonic/gin"
-	"github.com/opentracing/opentracing-go"
 	"github.com/pkg/errors"
 )
 
@@ -27,10 +26,10 @@ type HTTPServer struct {
 	server *http.Server
 }
 
-func NewHTTPServer(cfg config.ServerConfig, tracer opentracing.Tracer, logger *logger.Logger) *HTTPServer {
+func NewHTTPServer(cfg config.ServerConfig, logger *logger.Logger) *HTTPServer {
 	engine := gin.New()
 
-	engine.Use(middleware.RecoveryMiddleware(&cfg, logger, tracer))
+	engine.Use(middleware.RecoveryMiddleware(&cfg, logger))
 	engine.Use(middleware.RequestMiddleware(logger))
 	engine.Use(middleware.ResponseMiddleware(&cfg, logger))
 	engine.NoRoute(middleware.NoRoute())

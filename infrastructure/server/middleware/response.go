@@ -3,7 +3,7 @@ package middleware
 import (
 	"encoding/json"
 	"fmt"
-	config2 "github.com/dmitrymatviets/myhood/infrastructure/config"
+	"github.com/dmitrymatviets/myhood/infrastructure"
 	"github.com/dmitrymatviets/myhood/infrastructure/logger"
 	"github.com/dmitrymatviets/myhood/infrastructure/server/config"
 	"github.com/dmitrymatviets/myhood/infrastructure/server/protocol"
@@ -27,7 +27,7 @@ func ResponseMiddleware(cfg *config.ServerConfig, logger *logger.Logger) gin.Han
 
 func sendDecoratedJsonResponse(ctx *gin.Context, cfg *config.ServerConfig, logger *logger.Logger) {
 	meta := map[string]interface{}{
-		"_requestId":  fmt.Sprint(ctx.MustGet(config2.CtxKeyRequestId)),
+		"_requestId":  fmt.Sprint(ctx.MustGet(infrastructure.CtxKeyRequestId)),
 		"_appVersion": fmt.Sprint(cfg.Version),
 	}
 
@@ -40,7 +40,7 @@ func sendDecoratedJsonResponse(ctx *gin.Context, cfg *config.ServerConfig, logge
 		errMessage := defaultErrMessage
 		errCode := defaultErrCode
 
-		err := ctx.MustGet(config2.CtxKeyResponse)
+		err := ctx.MustGet(infrastructure.CtxKeyResponse)
 		if realErr, ok := err.(error); ok {
 			// залогируем ошибку + внутренности
 			logger.Error(ctx, realErr.Error(), "error", fmt.Sprintf("%+v", err))
@@ -59,7 +59,7 @@ func sendDecoratedJsonResponse(ctx *gin.Context, cfg *config.ServerConfig, logge
 			},
 		}
 	} else {
-		result, _ := json.Marshal(ctx.MustGet(config2.CtxKeyResponse))
+		result, _ := json.Marshal(ctx.MustGet(infrastructure.CtxKeyResponse))
 		response = protocol.ResponseSuccess{
 			Success:  1,
 			Envelope: protocol.Envelope{Meta: metaJson},
