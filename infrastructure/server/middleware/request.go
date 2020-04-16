@@ -4,6 +4,7 @@ import (
 	"github.com/dmitrymatviets/myhood/infrastructure"
 	"github.com/dmitrymatviets/myhood/infrastructure/server/protocol"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
 	"github.com/dmitrymatviets/myhood/infrastructure/logger"
@@ -26,7 +27,8 @@ func RequestMiddleware(logger *logger.Logger) gin.HandlerFunc {
 		}
 
 		ctx.Set(infrastructure.CtxKeyMeta, req.Meta)
-		ctx.Set(infrastructure.CtxKeyRequestId, req.Data)
+		ctx.Set(infrastructure.CtxKeyRequest, req.Data)
+		ctx.Set(infrastructure.CtxKeyRequestId, uuid.New().String())
 
 		requestString := req.Data
 

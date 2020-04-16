@@ -21,6 +21,7 @@ func NewAuthService(cityRepo contract.ICityRepository, userRepo contract.IUserRe
 }
 
 func (as *AuthService) SignUp(ctx context.Context, dto model.SignupDto) (model.Session, *model.User, error) {
+	//validation
 	err := as.validateSignupDto(ctx, dto)
 	if err != nil {
 		return "", nil, err
