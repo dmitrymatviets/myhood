@@ -4,25 +4,26 @@ import (
 	"context"
 	"github.com/dmitrymatviets/myhood/core/contract"
 	"github.com/dmitrymatviets/myhood/core/model"
+	validator2 "github.com/dmitrymatviets/myhood/infrastructure/validator"
 	"github.com/dmitrymatviets/myhood/pkg"
-	"github.com/go-playground/validator/v10"
 	"time"
 )
 
 type AuthService struct {
-	cityRepo contract.ICityRepository
-	userRepo contract.IUserRepository
+	cityRepo  contract.ICityRepository
+	userRepo  contract.IUserRepository
+	validator *validator2.Validator
 }
 
-func NewAuthService(cityRepo contract.ICityRepository, userRepo contract.IUserRepository) contract.IAuthService {
+func NewAuthService(cityRepo contract.ICityRepository, userRepo contract.IUserRepository, validator *validator2.Validator) contract.IAuthService {
 	return &AuthService{
-		cityRepo: cityRepo,
-		userRepo: userRepo,
+		cityRepo:  cityRepo,
+		userRepo:  userRepo,
+		validator: validator,
 	}
 }
 
 func (as *AuthService) SignUp(ctx context.Context, dto model.SignupDto) (model.Session, *model.User, error) {
-	//validation
 	err := as.validateSignupDto(ctx, dto)
 	if err != nil {
 		return "", nil, err
@@ -53,25 +54,25 @@ func (as *AuthService) Logout(ctx context.Context, sessionId model.Session) erro
 }
 
 func (as *AuthService) validateSignupDto(ctx context.Context, dto model.SignupDto) error {
-	err := validator.New().Struct(dto)
+	err := as.validator.ValidateStruct(dto)
 	if err != nil {
-		return pkg.NewPublicError("Ошибка валидации "+err.Error(), err)
+		return err
 	}
 
 	if dto.DateOfBirth.After(time.Now().AddDate(-6, 0, 0)) {
-		return pkg.NewPublicError("Ошибка валидации: регистрация возможна с 6 лет", err)
+		return pkg.NewValidationErr("регистрация возможна с 6 лет", err)
 	}
 
 	if dto.DateOfBirth.Before(time.Now().AddDate(-120, 0, 0)) {
-		return pkg.NewPublicError("Ошибка валидации: некорректная дата", err)
+		return pkg.NewValidationErr("некорректная дата", err)
 	}
 
 	city, err := as.cityRepo.GetById(ctx, dto.CityId)
-	if city == nil {
-		return pkg.NewPublicError("Ошибка валидации: неверный город")
-	}
 	if err != nil {
 		return pkg.NewPublicError("Ошибка проверки города", err)
+	}
+	if city == nil {
+		return pkg.NewValidationErr("неверный город", nil)
 	}
 	return nil
 }

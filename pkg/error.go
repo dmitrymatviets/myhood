@@ -3,7 +3,8 @@ package pkg
 type ErrCode string
 
 const (
-	InternalError ErrCode = "InternalError"
+	InternalError   ErrCode = "InternalError"
+	ValidationError ErrCode = "ValidationError"
 )
 
 type PublicError struct {
@@ -41,4 +42,8 @@ func NewPublicError(message string, params ...interface{}) *PublicError {
 		}
 	}
 	return &PublicError{Message: message, Code: code, InternalError: internalError}
+}
+
+func NewValidationErr(message string, innerErr error) error {
+	return NewPublicError("Ошибка валидации: "+message, ValidationError, innerErr)
 }

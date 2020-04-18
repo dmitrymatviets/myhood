@@ -7,6 +7,7 @@ import (
 	"github.com/dmitrymatviets/myhood/infrastructure/database"
 	"github.com/dmitrymatviets/myhood/infrastructure/logger"
 	"github.com/dmitrymatviets/myhood/infrastructure/server"
+	"github.com/dmitrymatviets/myhood/infrastructure/validator"
 	"github.com/dmitrymatviets/myhood/repository/city"
 	"github.com/dmitrymatviets/myhood/repository/user"
 	"github.com/dmitrymatviets/myhood/service"
@@ -20,6 +21,7 @@ func main() {
 			database.NewDatabase,
 			server.NewHTTPServer,
 			logger.New,
+			validator.NewValidator,
 			city.NewMssqlCityRepository,
 			user.NewMssqlUserRepository,
 			service.NewAuthService,

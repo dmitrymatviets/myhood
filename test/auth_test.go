@@ -8,31 +8,38 @@ import (
 	"github.com/dmitrymatviets/myhood/infrastructure/config"
 	"github.com/dmitrymatviets/myhood/infrastructure/database"
 	"github.com/dmitrymatviets/myhood/infrastructure/logger"
+	"github.com/dmitrymatviets/myhood/infrastructure/validator"
 	"github.com/dmitrymatviets/myhood/repository/city"
 	"github.com/dmitrymatviets/myhood/repository/user"
 	"github.com/dmitrymatviets/myhood/service"
 	assert "github.com/stretchr/testify/require"
 	"go.uber.org/fx"
 	rand2 "math/rand"
+	"strings"
+	"sync"
 	"testing"
 	"time"
 )
 
 var authService contract.IAuthService
+var once sync.Once
 
 func getAuthService() contract.IAuthService {
-	fx.New(
-		fx.NopLogger,
-		fx.Provide(
-			config.Load,
-			database.NewDatabase,
-			logger.New,
-			city.NewMssqlCityRepository,
-			user.NewMssqlUserRepository,
-			service.NewAuthService,
-		),
-		fx.Populate(&authService),
-	)
+	once.Do(func() {
+		fx.New(
+			fx.NopLogger,
+			fx.Provide(
+				config.Load,
+				database.NewDatabase,
+				logger.New,
+				validator.NewValidator,
+				city.NewMssqlCityRepository,
+				user.NewMssqlUserRepository,
+				service.NewAuthService,
+			),
+			fx.Populate(&authService),
+		)
+	})
 	return authService
 }
 
@@ -41,7 +48,7 @@ func getValidSignupDto() model.SignupDto {
 	return model.SignupDto{
 		Credentials: model.Credentials{
 			Email:    fmt.Sprintf("test%d@test%d.com", rand2.Int(), rand2.Int()),
-			Password: "12345",
+			Password: "123456",
 		},
 		Name:        "Дмитрий",
 		Surname:     "Матвиец",
@@ -52,12 +59,15 @@ func getValidSignupDto() model.SignupDto {
 	}
 }
 
+//region signup
+
 func TestSignup_ValidSignupDto_CreatesUser(t *testing.T) {
 	as := getAuthService()
 	session, user, err := as.SignUp(context.Background(), getValidSignupDto())
 	assert.NoError(t, err)
 	assert.NotEmpty(t, session)
 	assert.NotNil(t, user)
+	assert.NotEmpty(t, user.Id)
 }
 
 func TestSignup_DuplicatedEmail_Fails(t *testing.T) {
@@ -192,4 +202,75 @@ func TestSignup_NoInterest_Succeeds(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotEmpty(t, session)
 	assert.NotNil(t, user)
+}
+
+func TestSignup_TooLongEmail_Fails(t *testing.T) {
+	as := getAuthService()
+	dto1 := getValidSignupDto()
+	dto1.Email = strings.Repeat("a", 255) + dto1.Email
+	session, user, err := as.SignUp(context.Background(), dto1)
+	assert.NotNil(t, err)
+	assert.Empty(t, session)
+	assert.Nil(t, user)
+	assert.Contains(t, err.Error(), "Ошибка валидации")
+	fmt.Println(err)
+}
+
+func TestSignup_IncorrectEmail_Fails(t *testing.T) {
+	as := getAuthService()
+	dto1 := getValidSignupDto()
+	dto1.Email = "@@@@@@@" + dto1.Email
+	session, user, err := as.SignUp(context.Background(), dto1)
+	assert.NotNil(t, err)
+	assert.Empty(t, session)
+	assert.Nil(t, user)
+	assert.Contains(t, err.Error(), "Ошибка валидации")
+	fmt.Println(err)
+}
+
+func TestSignup_TooLongName_Fails(t *testing.T) {
+	as := getAuthService()
+	dto1 := getValidSignupDto()
+	dto1.Name = strings.Repeat("т", 61)
+	session, user, err := as.SignUp(context.Background(), dto1)
+	assert.NotNil(t, err)
+	assert.Empty(t, session)
+	assert.Nil(t, user)
+	assert.Contains(t, err.Error(), "Ошибка валидации")
+	fmt.Println(err)
+}
+
+func TestSignup_TooLongSurname_Fails(t *testing.T) {
+	as := getAuthService()
+	dto1 := getValidSignupDto()
+	dto1.Surname = strings.Repeat("т", 61)
+	session, user, err := as.SignUp(context.Background(), dto1)
+	assert.NotNil(t, err)
+	assert.Empty(t, session)
+	assert.Nil(t, user)
+	assert.Contains(t, err.Error(), "Ошибка валидации")
+	fmt.Println(err)
+}
+
+func TestSignup_TooShortPassword_Fails(t *testing.T) {
+	as := getAuthService()
+	dto1 := getValidSignupDto()
+	dto1.Password = "12345"
+	session, user, err := as.SignUp(context.Background(), dto1)
+	assert.NotNil(t, err)
+	assert.Empty(t, session)
+	assert.Nil(t, user)
+	assert.Contains(t, err.Error(), "Ошибка валидации")
+	fmt.Println(err)
+}
+
+//endregion t
+
+func TestLogin_ValidSignupDto_CreatesUser(t *testing.T) {
+	as := getAuthService()
+	session, user, err := as.SignUp(context.Background(), getValidSignupDto())
+	assert.NoError(t, err)
+	assert.NotEmpty(t, session)
+	assert.NotNil(t, user)
+	assert.NotEmpty(t, user.Id)
 }

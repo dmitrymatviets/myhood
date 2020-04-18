@@ -44,8 +44,8 @@ type DisplayUserDto struct {
 // DTO для регистрации пользователя
 type SignupDto struct {
 	Credentials `validate:"dive,required"`
-	Name        string    `json:"name" validate:"required"`
-	Surname     string    `json:"surname" validate:"required"`
+	Name        string    `json:"name" validate:"required,max=50"`
+	Surname     string    `json:"surname" validate:"required,max=50"`
 	DateOfBirth time.Time `json:"dateOfBirth" validate:"required"`
 	Gender      string    `json:"gender" validate:"required,oneof=м ж"`
 	Interests   []string  `json:"interests"`
@@ -74,8 +74,8 @@ type UserWithPassword struct {
 
 // DTO для аутентификации
 type Credentials struct {
-	Email    string `json:"email" validate:"required"`
-	Password string `json:"password" validate:"required"`
+	Email    string `json:"email" validate:"required,max=255,email"`
+	Password string `json:"password" validate:"required,min=6"`
 }
 
 // идентификатор сессии
