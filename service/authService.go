@@ -42,15 +42,22 @@ func (as *AuthService) SignUp(ctx context.Context, dto model.SignupDto) (model.S
 }
 
 func (as *AuthService) Login(ctx context.Context, credentials model.Credentials) (model.Session, *model.User, error) {
-	panic("implement me")
+	return as.userRepo.Authenticate(ctx, credentials)
 }
 
 func (as *AuthService) GetUserBySession(ctx context.Context, sessionId model.Session) (*model.User, error) {
-	panic("implement me")
+	userId, err := as.userRepo.GetUserIdBySession(ctx, sessionId)
+	if err != nil {
+		return nil, err
+	}
+	if userId == 0 {
+		return nil, pkg.NewPublicError("Некорректная сессия")
+	}
+	return as.userRepo.GetById(ctx, userId)
 }
 
 func (as *AuthService) Logout(ctx context.Context, sessionId model.Session) error {
-	panic("implement me")
+	return as.userRepo.Logout(ctx, sessionId)
 }
 
 func (as *AuthService) validateSignupDto(ctx context.Context, dto model.SignupDto) error {

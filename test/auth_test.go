@@ -24,6 +24,8 @@ import (
 var authService contract.IAuthService
 var once sync.Once
 
+const defaultPass = "123456"
+
 func getAuthService() contract.IAuthService {
 	once.Do(func() {
 		fx.New(
@@ -48,7 +50,7 @@ func getValidSignupDto() model.SignupDto {
 	return model.SignupDto{
 		Credentials: model.Credentials{
 			Email:    fmt.Sprintf("test%d@test%d.com", rand2.Int(), rand2.Int()),
-			Password: "123456",
+			Password: defaultPass,
 		},
 		Name:        "Дмитрий",
 		Surname:     "Матвиец",
@@ -57,6 +59,12 @@ func getValidSignupDto() model.SignupDto {
 		Interests:   []string{"программирование"},
 		CityId:      1,
 	}
+}
+
+func createValidUser() (model.Session, *model.User) {
+	as := getAuthService()
+	session, user, _ := as.SignUp(context.Background(), getValidSignupDto())
+	return session, user
 }
 
 //region signup
@@ -266,11 +274,73 @@ func TestSignup_TooShortPassword_Fails(t *testing.T) {
 
 //endregion t
 
-func TestLogin_ValidSignupDto_CreatesUser(t *testing.T) {
+func TestLogin_ValidCredentials_Success(t *testing.T) {
 	as := getAuthService()
-	session, user, err := as.SignUp(context.Background(), getValidSignupDto())
+	_, user := createValidUser()
+	session, loginUser, err := as.Login(context.Background(), model.Credentials{
+		Email:    user.Email,
+		Password: defaultPass,
+	})
 	assert.NoError(t, err)
 	assert.NotEmpty(t, session)
-	assert.NotNil(t, user)
-	assert.NotEmpty(t, user.Id)
+	assert.NotNil(t, loginUser)
+	assert.Equal(t, user.Id, loginUser.Id)
+}
+
+func TestLogin_BadPass_Fails(t *testing.T) {
+	as := getAuthService()
+	_, user := createValidUser()
+	session, loginUser, err := as.Login(context.Background(), model.Credentials{
+		Email:    user.Email,
+		Password: "badpass",
+	})
+	assert.NotNil(t, err)
+	assert.Empty(t, session)
+	assert.Nil(t, loginUser)
+	fmt.Println(err)
+}
+
+func TestLogin_BadLogin_Fails(t *testing.T) {
+	as := getAuthService()
+	session, loginUser, err := as.Login(context.Background(), model.Credentials{
+		Email:    "badlogin@mail.ru",
+		Password: "123456",
+	})
+	assert.NotNil(t, err)
+	assert.Empty(t, session)
+	assert.Nil(t, loginUser)
+	fmt.Println(err)
+}
+
+func TestGetUserBySession_CorrectSession_Success(t *testing.T) {
+	as := getAuthService()
+	session, user := createValidUser()
+
+	loggedUser, err := as.GetUserBySession(context.Background(), session)
+	assert.NoError(t, err)
+	assert.Equal(t, user.Id, loggedUser.Id)
+}
+
+func TestGetUserBySession_BadSession_Failure(t *testing.T) {
+	as := getAuthService()
+
+	loggedUser, err := as.GetUserBySession(context.Background(), "thisIsNotSession")
+	assert.Error(t, err)
+	assert.Nil(t, loggedUser)
+}
+
+func TestLogout_CorrectSession_Success(t *testing.T) {
+	as := getAuthService()
+	session, _ := createValidUser()
+	err := as.Logout(context.Background(), session)
+	assert.NoError(t, err)
+	loggedUser, err := as.GetUserBySession(context.Background(), session)
+	assert.Error(t, err)
+	assert.Nil(t, loggedUser)
+}
+
+func TestLogout_BadSession_Failure(t *testing.T) {
+	as := getAuthService()
+	err := as.Logout(context.Background(), "badSession")
+	assert.Error(t, err)
 }
