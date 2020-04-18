@@ -90,12 +90,22 @@ func (ur *MssqlUserRepository) GetUserIdBySession(ctx context.Context, sessionId
 }
 
 func (ur *MssqlUserRepository) Logout(ctx context.Context, sessionId model.Session) error {
-	_, err := ur.db.TxOrDbFromContext(ctx).ExecContext(ctx,
+	result, err := ur.db.TxOrDbFromContext(ctx).ExecContext(ctx,
 		`delete
                  from sessions
                 where session_id = ?`,
 		sessionId)
-	return err
+
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, _ := result.RowsAffected()
+	if rowsAffected <= 0 {
+		return errors.New("Некорректная сессия")
+	}
+
+	return nil
 }
 
 func (ur *MssqlUserRepository) GetById(ctx context.Context, id model.IntId) (*model.User, error) {
