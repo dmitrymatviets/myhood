@@ -26,50 +26,54 @@ func ResponseMiddleware(cfg *config.ServerConfig, logger *logger.Logger) gin.Han
 }
 
 func sendDecoratedJsonResponse(ctx *gin.Context, cfg *config.ServerConfig, logger *logger.Logger) {
-	meta := map[string]interface{}{
-		"_requestId":  fmt.Sprint(ctx.MustGet(infrastructure.CtxKeyRequestId)),
-		"_appVersion": fmt.Sprint(cfg.Version),
-	}
+	if ctx.Request.Method == http.MethodPost {
+		meta := map[string]interface{}{
+			"_requestId":  fmt.Sprint(ctx.MustGet(infrastructure.CtxKeyRequestId)),
+			"_appVersion": fmt.Sprint(cfg.Version),
+		}
 
-	metaJson, _ := json.Marshal(meta)
+		metaJson, _ := json.Marshal(meta)
 
-	var response interface{}
+		var response interface{}
 
-	isError := len(ctx.Errors) > 0
-	if isError {
-		errMessage := defaultErrMessage
-		errCode := defaultErrCode
+		isError := len(ctx.Errors) > 0
+		if isError {
+			errMessage := defaultErrMessage
+			errCode := defaultErrCode
 
-		err := ctx.MustGet(infrastructure.CtxKeyResponse)
-		if realErr, ok := err.(error); ok {
-			// залогируем ошибку + внутренности
-			logger.Error(ctx, realErr.Error(), "error", fmt.Sprintf("%+v", err))
-			if publicError, ok := realErr.(*pkg.PublicError); ok {
-				errMessage = publicError.Message
-				errCode = string(publicError.Code)
+			err := ctx.MustGet(infrastructure.CtxKeyResponse)
+			if realErr, ok := err.(error); ok {
+				// залогируем ошибку + внутренности
+				logger.Error(ctx, realErr.Error(), "error", fmt.Sprintf("%+v", err))
+				if publicError, ok := realErr.(*pkg.PublicError); ok {
+					errMessage = publicError.Message
+					errCode = string(publicError.Code)
+				}
+			}
+
+			response = protocol.ResponseError{
+				Success:  0,
+				Envelope: protocol.Envelope{Meta: metaJson},
+				Error: protocol.RError{
+					Message: errMessage,
+					Code:    errCode,
+				},
+			}
+		} else {
+			result, _ := json.Marshal(ctx.MustGet(infrastructure.CtxKeyResponse))
+			response = protocol.ResponseSuccess{
+				Success:  1,
+				Envelope: protocol.Envelope{Meta: metaJson},
+				Data:     result,
 			}
 		}
 
-		response = protocol.ResponseError{
-			Success:  0,
-			Envelope: protocol.Envelope{Meta: metaJson},
-			Error: protocol.RError{
-				Message: errMessage,
-				Code:    errCode,
-			},
-		}
+		logger.Info(ctx, "response",
+			"url", ctx.Request.RequestURI,
+			"body", response)
+
+		ctx.JSON(http.StatusOK, response)
 	} else {
-		result, _ := json.Marshal(ctx.MustGet(infrastructure.CtxKeyResponse))
-		response = protocol.ResponseSuccess{
-			Success:  1,
-			Envelope: protocol.Envelope{Meta: metaJson},
-			Data:     result,
-		}
+
 	}
-
-	logger.Info(ctx, "response",
-		"url", ctx.Request.RequestURI,
-		"body", response)
-
-	ctx.JSON(http.StatusOK, response)
 }

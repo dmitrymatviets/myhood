@@ -5,7 +5,9 @@ import (
 	"github.com/dmitrymatviets/myhood/core/contract"
 	"github.com/dmitrymatviets/myhood/infrastructure"
 	baseHTTP "github.com/dmitrymatviets/myhood/infrastructure/server"
+	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
+	"net/http"
 )
 
 type Server struct {
@@ -20,6 +22,11 @@ func NewServer(httpServer *baseHTTP.HTTPServer, authService contract.IAuthServic
 	NewAuthEndpoint(s, authService)
 	NewUserEndpoint(s, userService)
 
+	s.AddRoutes(&baseHTTP.Route{
+		Method:      http.MethodGet,
+		Path:        "/",
+		HandleFuncs: []gin.HandlerFunc{static.ServeRoot("/", "ui")},
+	})
 	return s
 }
 
