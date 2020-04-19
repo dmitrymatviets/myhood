@@ -10,7 +10,8 @@ type IAuthService interface {
 	SignUp(ctx context.Context, dto model.SignupDto) (model.Session, *model.User, error)
 	// аутентификация пользователя
 	Login(ctx context.Context, credentials model.Credentials) (model.Session, *model.User, error)
-	// получение пользователя по сессии
+	// получение пользователя по сессии.
+	// возвращает ошибку в любом неуспешном случае.
 	GetUserBySession(ctx context.Context, sessionId model.Session) (*model.User, error)
 	// выход из системы
 	Logout(ctx context.Context, sessionId model.Session) error
@@ -18,13 +19,17 @@ type IAuthService interface {
 
 type IUserService interface {
 	// получение пользователя по id
-	GetById(ctx context.Context, id model.IntId) (*model.User, error)
+	GetById(ctx context.Context, sessionId model.Session, id model.IntId) (*model.User, error)
 	// получение нескольких пользователей по id
-	GetByIds(ctx context.Context, ids []model.IntId) ([]*model.User, error)
+	GetByIds(ctx context.Context, sessionId model.Session, ids []model.IntId) ([]*model.User, error)
 	// получение списка друзей
-	GetFriends(ctx context.Context, userId model.IntId) ([]*model.DisplayUserDto, error)
+	GetFriends(ctx context.Context, sessionId model.Session, userId model.IntId) ([]*model.DisplayUserDto, error)
 	// сохранение пользователя
-	SaveUser(ctx context.Context, user *model.User) (*model.User, error)
+	SaveUser(ctx context.Context, sessionId model.Session, user *model.User) (*model.User, error)
+	// добавление друга
+	AddFriend(ctx context.Context, sessionId model.Session, friendId model.IntId) error
+	// удаление друга
+	RemoveFriend(ctx context.Context, sessionId model.Session, friendId model.IntId) error
 }
 
 type IUserRepository interface {
@@ -44,6 +49,8 @@ type IUserRepository interface {
 	GetByIds(ctx context.Context, ids []model.IntId) ([]*model.User, error)
 	// сохранение пользователя
 	SaveUser(ctx context.Context, user *model.User) (*model.User, error)
+	// список друзей
+	GetFriends(ctx context.Context, userId *model.User) ([]*model.DisplayUserDto, error)
 	// добавление друга
 	AddFriend(ctx context.Context, user *model.User, friend *model.User) error
 	// удаление друга

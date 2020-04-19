@@ -53,7 +53,14 @@ func (as *AuthService) GetUserBySession(ctx context.Context, sessionId model.Ses
 	if userId == 0 {
 		return nil, pkg.NewPublicError("Некорректная сессия")
 	}
-	return as.userRepo.GetById(ctx, userId)
+	user, err := as.userRepo.GetById(ctx, userId)
+	if err != nil {
+		return nil, err
+	}
+	if user == nil {
+		return nil, pkg.NewPublicError("Ошибка получения пользователя")
+	}
+	return user, nil
 }
 
 func (as *AuthService) Logout(ctx context.Context, sessionId model.Session) error {

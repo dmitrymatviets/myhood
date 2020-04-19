@@ -227,7 +227,7 @@ func (ur *MssqlUserRepository) GetFriends(ctx context.Context, user *model.User)
 func (ur *MssqlUserRepository) SaveUser(ctx context.Context, user *model.User) (*model.User, error) {
 	dtoUser := newUserDtoFromUser(user)
 
-	_, err := ur.db.TxOrDbFromContext(ctx).ExecContext(ctx,
+	result, err := ur.db.TxOrDbFromContext(ctx).ExecContext(ctx,
 		`update users
                   set email = ?
                     , name = ?
@@ -250,6 +250,10 @@ func (ur *MssqlUserRepository) SaveUser(ctx context.Context, user *model.User) (
 
 	if err != nil {
 		return nil, pkg.NewPublicError("Ошибка изменения пользователя", errors.WithStack(err))
+	}
+
+	if rowsAffected, _ := result.RowsAffected(); rowsAffected <= 0 {
+		return nil, pkg.NewPublicError("Ошибка изменения пользователя. Результат не применен")
 	}
 
 	user, err = ur.GetById(ctx, user.Id)
