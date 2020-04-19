@@ -141,7 +141,7 @@
                 this.authorize(Object.fromEntries(new FormData(e.srcElement)));
             },
             authorize: async function (data) {
-                const result = await this._request("/v1/auth/signup", data)
+                const result = await this._request("/v1/auth/login", data)
                 this.addMessage(JSON.stringify(result));
 
                 /*

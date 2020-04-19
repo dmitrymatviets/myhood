@@ -46,7 +46,7 @@ func NewAuthEndpoint(s *Server, authService contract.IAuthService) *AuthEndpoint
 
 func (e *AuthEndpoint) SignupV1(ctx *gin.Context) {
 	var requestDto dto.SignupRequest
-	e.ApiMethod(ctx, requestDto, func() (interface{}, error) {
+	e.ApiMethod(ctx, &requestDto, func() (interface{}, error) {
 		session, user, err := e.authService.SignUp(ctx, requestDto.SignupDto)
 		if err != nil {
 			return nil, err
@@ -60,7 +60,7 @@ func (e *AuthEndpoint) SignupV1(ctx *gin.Context) {
 
 func (e *AuthEndpoint) LoginV1(ctx *gin.Context) {
 	var requestDto dto.LoginRequest
-	e.ApiMethod(ctx, requestDto, func() (interface{}, error) {
+	e.ApiMethod(ctx, &requestDto, func() (interface{}, error) {
 		session, user, err := e.authService.Login(ctx, requestDto.Credentials)
 		if err != nil {
 			return nil, err
@@ -74,7 +74,7 @@ func (e *AuthEndpoint) LoginV1(ctx *gin.Context) {
 
 func (e *AuthEndpoint) LogoutV1(ctx *gin.Context) {
 	var requestDto dto.LogoutRequest
-	e.ApiMethod(ctx, requestDto, func() (interface{}, error) {
+	e.ApiMethod(ctx, &requestDto, func() (interface{}, error) {
 		err := e.authService.Logout(ctx, requestDto.Session)
 		if err != nil {
 			return nil, err
@@ -85,7 +85,7 @@ func (e *AuthEndpoint) LogoutV1(ctx *gin.Context) {
 
 func (e *AuthEndpoint) CheckSessionV1(ctx *gin.Context) {
 	var requestDto dto.LogoutRequest
-	e.ApiMethod(ctx, requestDto, func() (interface{}, error) {
+	e.ApiMethod(ctx, &requestDto, func() (interface{}, error) {
 		user, err := e.authService.GetUserBySession(ctx, requestDto.Session)
 		if err != nil {
 			return nil, err

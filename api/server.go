@@ -52,7 +52,7 @@ func (s *Server) ResponseSuccess(ctx *gin.Context, data interface{}) {
 }
 
 func (e *Server) ApiMethod(ctx *gin.Context, requestDto interface{}, fn func() (interface{}, error)) {
-	err := e.UnmarshalRequestData(ctx, &requestDto)
+	err := e.UnmarshalRequestData(ctx, requestDto)
 	if err != nil {
 		e.ResponseError(ctx, err)
 		return
