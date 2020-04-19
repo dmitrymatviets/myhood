@@ -4,16 +4,18 @@ import (
 	"context"
 	"github.com/dmitrymatviets/myhood/core/contract"
 	"github.com/dmitrymatviets/myhood/core/model"
+	"github.com/dmitrymatviets/myhood/infrastructure/validator"
 	"github.com/dmitrymatviets/myhood/pkg"
 )
 
 type UserService struct {
 	userRepo    contract.IUserRepository
 	authService contract.IAuthService
+	validator   validator.Validator
 }
 
-func NewUserService(userRepo contract.IUserRepository, authService contract.IAuthService) contract.IUserService {
-	return &UserService{userRepo: userRepo, authService: authService}
+func NewUserService(userRepo contract.IUserRepository, authService contract.IAuthService, validator validator.Validator) contract.IUserService {
+	return &UserService{userRepo: userRepo, authService: authService, validator: validator}
 }
 
 func (us *UserService) GetById(ctx context.Context, sessionId model.Session, id model.IntId) (*model.User, error) {
@@ -59,6 +61,11 @@ func (us *UserService) SaveUser(ctx context.Context, sessionId model.Session, us
 
 	if sessionUser.Id != user.Id {
 		return nil, pkg.NewPublicError("Некорректный пользователь")
+	}
+
+	err = us.validator.ValidateStruct(user)
+	if err != nil {
+		return nil, err
 	}
 
 	return us.userRepo.SaveUser(ctx, user)

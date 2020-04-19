@@ -9,13 +9,13 @@ type IntId int64
 
 type User struct {
 	Id          IntId     `json:"id"`
-	Email       string    `json:"email"`
-	Name        string    `json:"name"`
-	Surname     string    `json:"surname"`
+	Email       string    `json:"email" validate:"required,max=255,email"`
+	Name        string    `json:"name" validate:"required,max=50"`
+	Surname     string    `json:"surname" validate:"required,max=50"`
 	DateOfBirth time.Time `json:"dateOfBirth"`
-	Gender      string    `json:"gender"`
+	Gender      string    `json:"gender"  validate:"required,oneof=м ж"`
 	Interests   []string  `json:"interests"`
-	CityId      IntId     `json:"cityId"`
+	CityId      IntId     `json:"cityId" validate:"required"`
 	Page        Page      `json:"page"`
 	//Avatar      string    `json:"avatar"`
 }
@@ -25,7 +25,7 @@ func (u *User) SetPage(page Page) {
 }
 
 type Page struct {
-	Slug      string `json:"slug" db:"page_slug"`
+	Slug      string `json:"slug" db:"page_slug" validate:"max=50"`
 	IsPrivate bool   `json:"is_private" db:"page_is_private"`
 }
 
