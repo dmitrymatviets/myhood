@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"github.com/dmitrymatviets/myhood/infrastructure"
 	"github.com/dmitrymatviets/myhood/infrastructure/server/protocol"
+	"github.com/dmitrymatviets/myhood/pkg"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/pkg/errors"
 	"net/http"
 
 	"github.com/dmitrymatviets/myhood/infrastructure/logger"
@@ -16,12 +16,15 @@ func RequestMiddleware(logger *logger.Logger) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		// before request
 
+		reqId := uuid.New().String()
+		ctx.Set(infrastructure.CtxKeyRequestId, reqId)
+
 		var requestString json.RawMessage
 		if ctx.Request.Method == http.MethodPost {
 			var req protocol.Request
 			err := ctx.ShouldBindJSON(&req)
 			if err != nil {
-				err = errors.Wrap(err, "request unmarshal error")
+				err = pkg.NewPublicError("Ошибка в теле запроса", err)
 				logger.Error(ctx, err.Error())
 
 				_ = ctx.Error(err)
@@ -35,9 +38,6 @@ func RequestMiddleware(logger *logger.Logger) gin.HandlerFunc {
 			requestString = req.Data
 
 		}
-
-		reqId := uuid.New().String()
-		ctx.Set(infrastructure.CtxKeyRequestId, reqId)
 
 		logger.Info(ctx, "request",
 			"url", ctx.Request.RequestURI,

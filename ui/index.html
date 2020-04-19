@@ -18,18 +18,36 @@
             height: 100%;
         }
 
-        .login-form {
-            width: 30%;
-            height: 50%;
-            display: block;
-        }
-
 
         .login {
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100%;
+        }
+
+
+        .login .card {
+            width: 30%;
+            display: block;
+        }
+
+        .messages {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            list-style-type: none;
+
+
+        }
+
+        .messages li {
+            border: 1px solid red;
+            background: #ededed;
+            padding: 10px;
+            margin: 10px 0;
+            width: 450px;
+            word-wrap: break-word;
         }
 
 
@@ -45,7 +63,8 @@
                         <div class="card-body">
                             <div class="h5">{{user.name}}</div>
                             <div class="h7 text-muted">Fullname : Miracles Lee Cross</div>
-                            <div class="h7">Developer of web applications, JavaScript, PHP, Java, Python, Ruby, Java, Node.js,
+                            <div class="h7">Developer of web applications, JavaScript, PHP, Java, Python, Ruby, Java,
+                                Node.js,
                                 etc.
                             </div>
                         </div>
@@ -67,37 +86,85 @@
         </div>
     </div>
     <div class="login" v-else>
-        <form class="login-form">
-            <div class="form-group">
-                <label for="exampleInputEmail1">Email address</label>
-                <input type="email" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp"
-                       placeholder="Enter email">
-                <small id="emailHelp" class="form-text text-muted">We'll never share your email with anyone
-                    else.</small>
+
+
+        <div class="card">
+            <div class="card-header">
+                <strong>Авторизация</strong>
             </div>
-            <div class="form-group">
-                <label for="exampleInputPassword1">Password</label>
-                <input type="password" class="form-control" id="exampleInputPassword1" placeholder="Password">
+            <div class="card-body">
+                <form class="login-form" v-on:submit="onLoginSubmit($event)">
+                    <div class="form-group">
+                        <label for="exampleInputEmail1">Email</label>
+                        <input name="login" type="email" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp">
+                    </div>
+                    <div class="form-group">
+                        <label for="exampleInputPassword1">Пароль</label>
+                        <input name="password" type="password" class="form-control" id="exampleInputPassword1">
+                    </div>
+                    <button type="submit" class="btn btn-primary">saasd</button>
+                </form>
             </div>
-            <button class="btn btn-primary" v-on:click="authorize($event)">Submit</button>
-        </form>
+            <div class="card-footer text-muted text-center">
+                <button class="btn btn-link" v-on:click="authorize($event)">Регистрация</button>
+            </div>
+
+        </div>
+
     </div>
+
+    <ul class="messages">
+        <li v-for="(item, index) in messages">
+            {{ item.text }}
+        </li>
+    </ul>
 </div>
 
 <script>
+
+
     var app = new Vue({
         el: '#app-2',
         data: {
             isLogged: false,
-            user: null
+            user: null,
+            messages: []
+        },
+        created: function () {
+            this.addMessage("Привет!")
         },
         methods: {
-            authorize: function (e) {
+            onLoginSubmit: function (e) {
+                debugger;
                 e.preventDefault();
+                this.authorize(Object.fromEntries(new FormData(e.srcElement)));
+            },
+            authorize: async function (e) {
+                const result = await this._request("/v1/auth/signup", {})
+                this.addMessage(JSON.stringify(result));
+
+                /*
                 this.isLogged = true;
                 this.user = {
                     name: 'Иванов иван'
                 }
+                */
+
+            },
+            addMessage: function (text) {
+                this.messages.push({text});
+                setTimeout(() => this.messages.pop(), 5000)
+            },
+            _request: async function (apiMethod, body) {
+                let response = await fetch(apiMethod, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json;charset=utf-8'
+                    },
+                    body: JSON.stringify(body)
+                });
+                let result = await response.json();
+                return result;
             }
         }
     })

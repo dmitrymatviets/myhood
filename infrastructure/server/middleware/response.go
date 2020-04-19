@@ -19,7 +19,9 @@ const (
 
 func ResponseMiddleware(cfg *config.ServerConfig, logger *logger.Logger) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		ctx.Next()
+		if len(ctx.Errors) == 0 {
+			ctx.Next()
+		}
 		// after request
 		sendDecoratedJsonResponse(ctx, cfg, logger)
 	}
