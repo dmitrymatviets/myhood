@@ -11,10 +11,10 @@ import (
 type UserService struct {
 	userRepo    contract.IUserRepository
 	authService contract.IAuthService
-	validator   validator.Validator
+	validator   *validator.Validator
 }
 
-func NewUserService(userRepo contract.IUserRepository, authService contract.IAuthService, validator validator.Validator) contract.IUserService {
+func NewUserService(userRepo contract.IUserRepository, authService contract.IAuthService, validator *validator.Validator) contract.IUserService {
 	return &UserService{userRepo: userRepo, authService: authService, validator: validator}
 }
 
