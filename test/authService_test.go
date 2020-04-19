@@ -274,6 +274,7 @@ func TestSignup_TooShortPassword_Fails(t *testing.T) {
 
 //endregion t
 
+//region login
 func TestLogin_ValidCredentials_Success(t *testing.T) {
 	as := getAuthService()
 	_, user := createValidUser()
@@ -312,6 +313,9 @@ func TestLogin_BadLogin_Fails(t *testing.T) {
 	fmt.Println(err)
 }
 
+//endregion
+
+//region getUserBySession
 func TestGetUserBySession_CorrectSession_Success(t *testing.T) {
 	as := getAuthService()
 	session, user := createValidUser()
@@ -329,6 +333,9 @@ func TestGetUserBySession_BadSession_Failure(t *testing.T) {
 	assert.Nil(t, loggedUser)
 }
 
+//endregion
+
+//region logout
 func TestLogout_CorrectSession_Success(t *testing.T) {
 	as := getAuthService()
 	session, _ := createValidUser()
@@ -344,3 +351,5 @@ func TestLogout_BadSession_Failure(t *testing.T) {
 	err := as.Logout(context.Background(), "badSession")
 	assert.Error(t, err)
 }
+
+//endregion
