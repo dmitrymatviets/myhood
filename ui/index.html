@@ -50,6 +50,22 @@
             word-wrap: break-word;
         }
 
+        .loader {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 1;
+            background: rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            font-weight: bold;
+            font-size: 30px;
+        }
+
 
     </style>
 </head>
@@ -121,6 +137,10 @@
             {{ item.text }}
         </li>
     </ul>
+
+    <div class="loader" v-if="isLoading">
+        Загрузка...
+    </div>
 </div>
 
 <script>
@@ -131,6 +151,8 @@
         data: {
             isLogged: false,
             user: null,
+            session: null,
+            isLoading: 0,
             messages: []
         },
         created: function () {
@@ -144,33 +166,40 @@
             },
             authorize: async function (data) {
                 const result = await this._request("/v1/auth/login", data)
-                this.addMessage(JSON.stringify(result));
-
-                /*
-                this.isLogged = true;
-                this.user = {
-                    name: 'Иванов иван'
+                if (result) {
+                    this.isLogged = true;
+                    this.user = result.data.user;
+                    this.session = result.data.session;
+                    this.addMessage(`${this.user.name} успешно авторизован`);
                 }
-                */
-
             },
             addMessage: function (text) {
                 this.messages.push({text});
                 setTimeout(() => this.messages.pop(), 5000)
             },
             _request: async function (apiMethod, data) {
-                let response = await fetch(apiMethod, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json;charset=utf-8'
-                    },
-                    body: JSON.stringify({
-                        meta: {},
-                        data
-                    })
-                });
-                let result = await response.json();
-                return result;
+                this.isLoading++;
+                try {
+                    let response = await fetch(apiMethod, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json;charset=utf-8'
+                        },
+                        body: JSON.stringify({
+                            meta: {},
+                            data
+                        })
+                    });
+                    let result = await response.json();
+                    if (!result.success) {
+                        throw new Error(`${apiMethod}:\r\n ${result.error && result.error.message || JSON.stringify(result)}`)
+                    }
+                    return result;
+                } catch (e) {
+                    this.addMessage(e.message);
+                } finally {
+                    this.isLoading--;
+                }
             }
         }
     })
