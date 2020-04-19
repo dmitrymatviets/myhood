@@ -31,11 +31,11 @@ func NewServer(httpServer *baseHTTP.HTTPServer, authService contract.IAuthServic
 }
 
 func (s *Server) UnmarshalRequestData(ctx *gin.Context, to interface{}) error {
-	return json.Unmarshal([]byte(s.RequestData(ctx)), to)
+	return json.Unmarshal(s.RequestData(ctx), to)
 }
 
-func (s *Server) RequestData(ctx *gin.Context) string {
-	return ctx.GetString(infrastructure.CtxKeyRequest)
+func (s *Server) RequestData(ctx *gin.Context) json.RawMessage {
+	return ctx.MustGet(infrastructure.CtxKeyRequest).(json.RawMessage)
 }
 
 func (s *Server) RequestMeta(ctx *gin.Context) string {

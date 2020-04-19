@@ -3,7 +3,7 @@ package dto
 import "github.com/dmitrymatviets/myhood/core/model"
 
 type LoginRequest struct {
-	model.Credentials `json:"session"`
+	model.Credentials
 }
 
 type LoginResponse struct {
