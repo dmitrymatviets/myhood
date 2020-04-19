@@ -25,8 +25,8 @@ func (u *User) SetPage(page Page) {
 }
 
 type Page struct {
-	Slug      string
-	IsPrivate bool
+	Slug      string `json:"slug" db:"page_slug"`
+	IsPrivate bool   `json:"is_private" db:"page_is_private"`
 }
 
 type City struct {
@@ -35,10 +35,10 @@ type City struct {
 }
 
 type DisplayUserDto struct {
-	Id      IntId  `json:"id"`
-	Name    string `json:"name"`
-	Surname string `json:"surname"`
-	Page    Page   `json:"page"`
+	Id      IntId  `json:"id" db:"user_id"`
+	Name    string `json:"name" db:"name"`
+	Surname string `json:"surname" db:"surname"`
+	Page
 }
 
 // DTO для регистрации пользователя

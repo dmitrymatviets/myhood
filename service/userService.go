@@ -61,8 +61,6 @@ func (us *UserService) SaveUser(ctx context.Context, sessionId model.Session, us
 		return nil, pkg.NewPublicError("Некорректный пользователь")
 	}
 
-	//TODO валидация? dto?
-
 	return us.userRepo.SaveUser(ctx, user)
 }
 
@@ -70,6 +68,10 @@ func (us *UserService) AddFriend(ctx context.Context, sessionId model.Session, f
 	sessionUser, err := us.authService.GetUserBySession(ctx, sessionId)
 	if err != nil {
 		return err
+	}
+
+	if friendId == sessionUser.Id {
+		return pkg.NewPublicError("Нельзя добавить в друзья самого себя")
 	}
 
 	friend, err := us.userRepo.GetById(ctx, friendId)

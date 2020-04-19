@@ -207,7 +207,7 @@ func (ur *MssqlUserRepository) GetFriends(ctx context.Context, user *model.User)
 	dtoUsers := make([]*model.DisplayUserDto, 0)
 
 	err := ur.db.TxOrDbFromContext(ctx).SelectContext(ctx, &dtoUsers,
-		`select user_id
+		`select u.user_id
                     , name
 	                , surname
 	                , page_slug
@@ -237,7 +237,7 @@ func (ur *MssqlUserRepository) SaveUser(ctx context.Context, user *model.User) (
                     , city_id = ?
                     , page_slug = ?
                     , page_is_private = ?
-                where id = ?`,
+                where user_id = ?`,
 		dtoUser.Email,
 		dtoUser.Name,
 		dtoUser.Surname,
@@ -246,6 +246,7 @@ func (ur *MssqlUserRepository) SaveUser(ctx context.Context, user *model.User) (
 		dtoUser.CityId,
 		dtoUser.PageSlug,
 		dtoUser.PageIsPrivate,
+		dtoUser.Id,
 	)
 
 	if err != nil {
