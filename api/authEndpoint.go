@@ -84,7 +84,7 @@ func (e *AuthEndpoint) LogoutV1(ctx *gin.Context) {
 }
 
 func (e *AuthEndpoint) CheckSessionV1(ctx *gin.Context) {
-	var requestDto dto.LogoutRequest
+	var requestDto dto.CheckSessionRequest
 	e.ApiMethod(ctx, &requestDto, func() (interface{}, error) {
 		user, err := e.authService.GetUserBySession(ctx, requestDto.Session)
 		if err != nil {
