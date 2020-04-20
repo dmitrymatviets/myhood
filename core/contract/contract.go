@@ -30,6 +30,8 @@ type IUserService interface {
 	AddFriend(ctx context.Context, sessionId model.Session, friendId model.IntId) error
 	// удаление друга
 	RemoveFriend(ctx context.Context, sessionId model.Session, friendId model.IntId) error
+	// получение рекомендаций для добавления в друзья
+	GetRecommendations(ctx context.Context, sessionId model.Session) ([]*model.DisplayUserDto, error)
 }
 
 type IUserRepository interface {
@@ -55,6 +57,8 @@ type IUserRepository interface {
 	AddFriend(ctx context.Context, user *model.User, friend *model.User) error
 	// удаление друга
 	RemoveFriend(ctx context.Context, user *model.User, friend *model.User) error
+	// получение рекомендаций для добавления в друзья
+	GetRecommendations(ctx context.Context, user *model.User) ([]*model.DisplayUserDto, error)
 }
 
 type ICityRepository interface {

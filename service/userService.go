@@ -110,3 +110,12 @@ func (us *UserService) RemoveFriend(ctx context.Context, sessionId model.Session
 
 	return us.userRepo.RemoveFriend(ctx, sessionUser, friend)
 }
+
+func (us *UserService) GetRecommendations(ctx context.Context, sessionId model.Session) ([]*model.DisplayUserDto, error) {
+	sessionUser, err := us.authService.GetUserBySession(ctx, sessionId)
+	if err != nil {
+		return nil, err
+	}
+
+	return us.userRepo.GetRecommendations(ctx, sessionUser)
+}

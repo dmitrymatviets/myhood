@@ -6,6 +6,8 @@
     <title>MyHood</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
           integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
+    <script src="https://momentjs.com/downloads/moment.js"></script>
     <script src="https://unpkg.com/vue"></script>
     <style>
 
@@ -65,8 +67,6 @@
             font-weight: bold;
             font-size: 30px;
         }
-
-
     </style>
 </head>
 <body>
@@ -76,28 +76,38 @@
             <div class="row">
                 <div class="col-md-3">
                     <div class="card">
+                        <div class="card-header">
+                            <svg class="bi bi-person-bounding-box" width="100%" height="150px" viewBox="0 0 16 16"
+                                 fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                <path fill-rule="evenodd"
+                                      d="M1.5 1a.5.5 0 00-.5.5v3a.5.5 0 01-1 0v-3A1.5 1.5 0 011.5 0h3a.5.5 0 010 1h-3zM11 .5a.5.5 0 01.5-.5h3A1.5 1.5 0 0116 1.5v3a.5.5 0 01-1 0v-3a.5.5 0 00-.5-.5h-3a.5.5 0 01-.5-.5zM.5 11a.5.5 0 01.5.5v3a.5.5 0 00.5.5h3a.5.5 0 010 1h-3A1.5 1.5 0 010 14.5v-3a.5.5 0 01.5-.5zm15 0a.5.5 0 01.5.5v3a1.5 1.5 0 01-1.5 1.5h-3a.5.5 0 010-1h3a.5.5 0 00.5-.5v-3a.5.5 0 01.5-.5z"
+                                      clip-rule="evenodd"/>
+                                <path fill-rule="evenodd"
+                                      d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1H3zm5-6a3 3 0 100-6 3 3 0 000 6z"
+                                      clip-rule="evenodd"/>
+                            </svg>
+                        </div>
                         <div class="card-body">
-                            <div class="h5">{{user.name}}</div>
-                            <div class="h7 text-muted">Fullname : Miracles Lee Cross</div>
-                            <div class="h7">Developer of web applications, JavaScript, PHP, Java, Python, Ruby, Java,
-                                Node.js,
-                                etc.
+                            <div class="h5">{{user.name}} {{user.surname}}</div>
+                            <div class="h7 text-muted">{{ moment(user.dateOfBirth).format("DD.MM.YYYY") }}</div>
+                            <div class="h7">Пол: <span class="badge badge-info">{{ user.gender }}</span></div>
+                            <div class="h7">Интересы: {{user.interests.join(", ")}}
                             </div>
                         </div>
                         <ul class="list-group list-group-flush">
                             <li class="list-group-item">
-                                <div class="h6 text-muted">Followers</div>
-                                <div class="h5">5.2342</div>
+                                <div class="h6 text-muted">Друзья <span
+                                            class="badge badge-info">{{friends.length}}</span></div>
                             </li>
                             <li class="list-group-item">
-                                <div class="h6 text-muted">Following</div>
-                                <div class="h5">6758</div>
+                                <button class="btn btn-primary" v-on:click.prevent="onLogout($event)">Выйти</button>
                             </li>
-                            <li class="list-group-item">Vestibulum at eros</li>
                         </ul>
                     </div>
                 </div>
-
+                <div class="col-md-9">
+                    Путушки
+                </div>
             </div>
         </div>
     </div>
@@ -181,8 +191,17 @@
             isLoading: 0,
             messages: []
         },
-        created: function () {
+        created: async function () {
             this.addMessage("Привет!")
+            const session = this.lsGet("session");
+            if (!session) {
+                return
+            }
+            const user = await this.sessionToUserRequest(session);
+            if (!user) {
+                return
+            }
+            this.setLoginState(user, session);
         },
         methods: {
             onLoginSubmit: async function (e) {
@@ -197,10 +216,15 @@
                 }
                 this.setFriendsState(friends);
             },
+            onLogout: async function (e) {
+                await this.logoutRequest(this.session);
+                this.setLoginState(null, null);
+            },
             setLoginState: function (user, session) {
                 this.isLogged = !!user;
                 this.user = user;
                 this.session = session;
+                this.lsSet("session", this.session);
                 if (this.isLogged) {
                     this.addMessage(`${this.user.name} успешно авторизован`);
                 }
@@ -212,12 +236,30 @@
                 this.messages.push({text});
                 setTimeout(() => this.messages.pop(), 5000)
             },
+            moment: window.moment,
+            lsSet: function (key, val) {
+                localStorage.setItem(key, JSON.stringify(val));
+            },
+            lsGet: function (key) {
+                const val = localStorage.getItem(key);
+                if (val) {
+                    return JSON.parse(val);
+                }
+            },
+            sessionToUserRequest: async function (session) {
+                const result = await this._request("/v1/auth/checkSession", {session});
+                return result && result.user;
+            },
             authorizeRequest: async function (data) {
                 return await this._request("/v1/auth/login", data);
             },
             getFriendsRequest: async function (data) {
                 const result = await this._request("/v1/user/getFriends", data);
                 return result && result.friends;
+            },
+            logoutRequest: async function (session) {
+                const result = await this._request("/v1/auth/logout", {session});
+                return !!result;
             },
             _request: async function (apiMethod, data) {
                 this.isLoading++;

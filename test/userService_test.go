@@ -196,6 +196,7 @@ func TestRemoveFriend_CorrectId_Success(t *testing.T) {
 
 //endregion
 
+//region saveUser
 func TestSaveUser_BadSession_Fail(t *testing.T) {
 	us := getUserService()
 	_, user := createValidUser()
@@ -238,4 +239,21 @@ func TestSaveUser_CorrectId_Success(t *testing.T) {
 	assert.Equal(t, savedUser.Interests, user.Interests)
 	assert.Equal(t, savedUser.CityId, user.CityId)
 	assert.Equal(t, savedUser.Page, user.Page)
+}
+
+//endregion
+
+func TestGetRecommendations_BadSession_Fail(t *testing.T) {
+	us := getUserService()
+	recs, err := us.GetRecommendations(context.Background(), "badSession")
+	assert.Error(t, err)
+	assert.Empty(t, recs)
+}
+
+func TestGetRecommendations_CorrectSession_Success(t *testing.T) {
+	us := getUserService()
+	session, _ := createValidUser()
+	recs, err := us.GetRecommendations(context.Background(), session)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, recs)
 }

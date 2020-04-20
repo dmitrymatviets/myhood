@@ -43,8 +43,14 @@ func NewUserEndpoint(s *Server, userService contract.IUserService) *UserEndpoint
 
 	s.AddRoutes(&baseHTTP.Route{
 		Method:      http.MethodPost,
-		Path:        "v1/auth/saveUser",
+		Path:        "v1/user/saveUser",
 		HandleFuncs: []gin.HandlerFunc{endpoint.SaveUserV1},
+	})
+
+	s.AddRoutes(&baseHTTP.Route{
+		Method:      http.MethodPost,
+		Path:        "v1/user/getRecommendations",
+		HandleFuncs: []gin.HandlerFunc{endpoint.GetRecommendationsV1},
 	})
 
 	return endpoint
@@ -107,6 +113,19 @@ func (ue *UserEndpoint) SaveUserV1(ctx *gin.Context) {
 		}
 		return dto.SaveUserResponse{
 			User: user,
+		}, nil
+	})
+}
+
+func (ue *UserEndpoint) GetRecommendationsV1(ctx *gin.Context) {
+	var requestDto dto.GetRecommendationsRequest
+	ue.ApiMethod(ctx, &requestDto, func() (interface{}, error) {
+		recs, err := ue.GetRecommendations(ctx, requestDto.Session)
+		if err != nil {
+			return nil, err
+		}
+		return dto.GetRecommendationsResponse{
+			Recommendations: recs,
 		}, nil
 	})
 }
