@@ -104,12 +104,12 @@
     <div class="login" v-else>
 
 
-        <div class="card">
+        <div class="card" v-if="!isSignup">
             <div class="card-header">
                 <strong>Авторизация</strong>
             </div>
             <div class="card-body">
-                <form class="login-form" v-on:submit="onLoginSubmit($event)">
+                <form class="login-form" v-on:submit.prevent="onLoginSubmit($event)">
                     <div class="form-group">
                         <label for="exampleInputEmail1">Email</label>
                         <input name="email" type="email" required="required" class="form-control"
@@ -125,11 +125,35 @@
                 </form>
             </div>
             <div class="card-footer text-muted text-center">
-                <button class="btn btn-link" v-on:click="authorize($event)">Регистрация</button>
+                <button class="btn btn-link" v-on:click.prevent="isSignup = true">Регистрация</button>
             </div>
 
         </div>
+        <div class="card" v-else>
+            <div class="card-header">
+                <strong>Регистрация</strong>
+            </div>
+            <div class="card-body">
+                <form class="signup-form" v-on:submit="onLoginSubmit($event)">
+                    <div class="form-group">
+                        <label for="exampleInputEmail1">Email</label>
+                        <input name="email" type="email" required="required" class="form-control"
+                               id="exampleInputEmail1"
+                               aria-describedby="emailHelp">
+                    </div>
+                    <div class="form-group">
+                        <label for="exampleInputPassword1">Пароль</label>
+                        <input name="password" minlength="6" required="required" type="password" class="form-control"
+                               id="exampleInputPassword1">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Зарегистрироваться</button>
+                </form>
+            </div>
+            <div class="card-footer text-muted text-center">
+                <button class="btn btn-link" v-on:click.prevent="isSignup = false">Войти</button>
+            </div>
 
+        </div>
     </div>
 
     <ul class="messages">
@@ -150,6 +174,8 @@
         el: '#app-2',
         data: {
             isLogged: false,
+            isSignup: false,
+            friends: [],
             user: null,
             session: null,
             isLoading: 0,
@@ -159,23 +185,39 @@
             this.addMessage("Привет!")
         },
         methods: {
-            onLoginSubmit: function (e) {
-                debugger;
-                e.preventDefault();
-                this.authorize(Object.fromEntries(new FormData(e.srcElement)));
+            onLoginSubmit: async function (e) {
+                const result = await this.authorizeRequest(Object.fromEntries(new FormData(e.srcElement)));
+                if (!result) {
+                    return
+                }
+                this.setLoginState(result.user, result.session);
+                const friends = await this.getFriendsRequest({session: this.session});
+                if (!friends) {
+                    return;
+                }
+                this.setFriendsState(friends);
             },
-            authorize: async function (data) {
-                const result = await this._request("/v1/auth/login", data)
-                if (result) {
-                    this.isLogged = true;
-                    this.user = result.data.user;
-                    this.session = result.data.session;
+            setLoginState: function (user, session) {
+                this.isLogged = !!user;
+                this.user = user;
+                this.session = session;
+                if (this.isLogged) {
                     this.addMessage(`${this.user.name} успешно авторизован`);
                 }
+            },
+            setFriendsState: function (friends) {
+                this.friends = friends;
             },
             addMessage: function (text) {
                 this.messages.push({text});
                 setTimeout(() => this.messages.pop(), 5000)
+            },
+            authorizeRequest: async function (data) {
+                return await this._request("/v1/auth/login", data);
+            },
+            getFriendsRequest: async function (data) {
+                const result = await this._request("/v1/user/getFriends", data);
+                return result && result.friends;
             },
             _request: async function (apiMethod, data) {
                 this.isLoading++;
@@ -194,7 +236,7 @@
                     if (!result.success) {
                         throw new Error(`${apiMethod}:\r\n ${result.error && result.error.message || JSON.stringify(result)}`)
                     }
-                    return result;
+                    return result.data;
                 } catch (e) {
                     this.addMessage(e.message);
                 } finally {

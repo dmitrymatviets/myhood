@@ -7,5 +7,5 @@ type CheckSessionRequest struct {
 }
 
 type CheckSessionResponse struct {
-	*model.User
+	User *model.User `json:"user"`
 }

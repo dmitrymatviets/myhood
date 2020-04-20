@@ -7,5 +7,5 @@ type LogoutRequest struct {
 }
 
 type LogoutResponse struct {
-	User *model.User
+	User *model.User `json:"user"`
 }
