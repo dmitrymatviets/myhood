@@ -3,6 +3,7 @@ FROM golang:1.14-alpine3.11 AS builder
 # Variables
 ENV APPDIR $GOPATH/src/myhood
 ENV ARTIFACT /build/myhood
+ENV UI /build/ui
 # Installing deps
 RUN apk --update --no-cache add git
 # Making directory for building app from source
@@ -11,6 +12,7 @@ RUN mkdir -p ${APPDIR}
 WORKDIR ${APPDIR}
 # Copying source code
 COPY . .
+COPY ./ui ${UI}
 RUN ls -la
 RUN go mod download
 RUN go mod vendor
