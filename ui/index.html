@@ -379,6 +379,8 @@
                 this.isLogged = !!user;
                 this.user = user;
                 this.session = session;
+                this.viewUserPageData = null;
+                this.isSignup = false;
                 this.lsSet("session", this.session);
                 if (this.isLogged) {
                     this.addMessage(`${this.user.name} успешно авторизован`);
