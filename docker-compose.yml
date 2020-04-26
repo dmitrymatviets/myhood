@@ -1,0 +1,20 @@
+version: "3.4"
+
+services:
+  myhood:
+    restart: always
+    env_file:
+      - .env
+    build:
+      dockerfile: Dockerfile
+      context: .
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: any
+      update_config:
+        parallelism: 2
+        delay: 10s
+        order: start-first
+    ports:
+      - 12750:12750
