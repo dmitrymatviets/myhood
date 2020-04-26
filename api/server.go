@@ -14,13 +14,14 @@ type Server struct {
 	*baseHTTP.HTTPServer
 }
 
-func NewServer(httpServer *baseHTTP.HTTPServer, authService contract.IAuthService, userService contract.IUserService) *Server {
+func NewServer(httpServer *baseHTTP.HTTPServer, authService contract.IAuthService, userService contract.IUserService, cityService contract.ICityService) *Server {
 	s := &Server{
 		HTTPServer: httpServer,
 	}
 
 	NewAuthEndpoint(s, authService)
 	NewUserEndpoint(s, userService)
+	NewCityEndpoint(s, cityService)
 
 	s.AddRoutes(&baseHTTP.Route{
 		Method:      http.MethodGet,

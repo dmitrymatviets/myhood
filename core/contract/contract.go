@@ -37,6 +37,11 @@ type IUserService interface {
 	GetRecommendations(ctx context.Context, sessionId model.Session) ([]*model.DisplayUserDto, error)
 }
 
+type ICityService interface {
+	// получение списка городов
+	GetCities(ctx context.Context) ([]*model.City, error)
+}
+
 type IUserRepository interface {
 	// регистрация пользователя
 	SignUp(ctx context.Context, UserWithPassword *model.UserWithPassword) (model.Session, *model.User, error)

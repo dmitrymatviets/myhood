@@ -26,6 +26,7 @@ func main() {
 			user.NewMssqlUserRepository,
 			service.NewAuthService,
 			service.NewUserService,
+			service.NewCityService,
 			api.NewServer,
 		),
 		fx.Invoke(startApp),

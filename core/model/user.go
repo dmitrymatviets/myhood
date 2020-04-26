@@ -30,8 +30,8 @@ type Page struct {
 }
 
 type City struct {
-	Id   IntId  `db:"city_id"`
-	Name string `db:"name"`
+	Id   IntId  `db:"city_id" json:"id"`
+	Name string `db:"name" json:"name"`
 }
 
 type DisplayUserDto struct {

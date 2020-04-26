@@ -73,6 +73,19 @@
             width: 30%;
             padding: 20px;
         }
+
+        .avatar {
+            width: 150px;
+            height: 150px;
+            text-align: center;
+            margin: 0 auto;
+            display: inline-block;
+        }
+
+        .avatar-sm {
+            width: 50px;
+            height: 50px;
+        }
     </style>
 </head>
 <body>
@@ -83,15 +96,7 @@
                 <div class="col-md-3">
                     <div class="card">
                         <div class="card-header">
-                            <svg class="bi bi-person-bounding-box" width="100%" height="150px" viewBox="0 0 16 16"
-                                 fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                                <path fill-rule="evenodd"
-                                      d="M1.5 1a.5.5 0 00-.5.5v3a.5.5 0 01-1 0v-3A1.5 1.5 0 011.5 0h3a.5.5 0 010 1h-3zM11 .5a.5.5 0 01.5-.5h3A1.5 1.5 0 0116 1.5v3a.5.5 0 01-1 0v-3a.5.5 0 00-.5-.5h-3a.5.5 0 01-.5-.5zM.5 11a.5.5 0 01.5.5v3a.5.5 0 00.5.5h3a.5.5 0 010 1h-3A1.5 1.5 0 010 14.5v-3a.5.5 0 01.5-.5zm15 0a.5.5 0 01.5.5v3a1.5 1.5 0 01-1.5 1.5h-3a.5.5 0 010-1h3a.5.5 0 00.5-.5v-3a.5.5 0 01.5-.5z"
-                                      clip-rule="evenodd"/>
-                                <path fill-rule="evenodd"
-                                      d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1H3zm5-6a3 3 0 100-6 3 3 0 000 6z"
-                                      clip-rule="evenodd"/>
-                            </svg>
+                            <img class="avatar" :src="'https://i.pravatar.cc/150?u=' + user.id"/>
                         </div>
                         <div class="card-body">
                             <div class="h5">{{user.name}} {{user.surname}}</div>
@@ -104,6 +109,13 @@
                             <li class="list-group-item">
                                 <div class="h6 text-muted">Друзья <span
                                             class="badge badge-info">{{friends.length}}</span></div>
+                                <div class="row">
+                                    <div class="col-md-4" v-for="(friend, index) in getFriendList()">
+                                        <img class="avatar avatar-sm"
+                                             :src="'https://i.pravatar.cc/150?u=' + friend.id"/>
+                                        <div>{{friend.name}} {{friend.surname}}</div>
+                                    </div>
+                                </div>
                             </li>
                             <li class="list-group-item">
                                 <button class="btn btn-primary" v-on:click.prevent="onLogout($event)">Выйти</button>
@@ -114,17 +126,9 @@
                 <div class="col-md-9">
                     <h3>Рекомендации</h3>
                     <div class="card rec text-center" v-for="(user, index) in recommendations">
-                        <svg class="bi bi-person-bounding-box" width="100%" height="100px" viewBox="0 0 16 16"
-                             fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                            <path fill-rule="evenodd"
-                                  d="M1.5 1a.5.5 0 00-.5.5v3a.5.5 0 01-1 0v-3A1.5 1.5 0 011.5 0h3a.5.5 0 010 1h-3zM11 .5a.5.5 0 01.5-.5h3A1.5 1.5 0 0116 1.5v3a.5.5 0 01-1 0v-3a.5.5 0 00-.5-.5h-3a.5.5 0 01-.5-.5zM.5 11a.5.5 0 01.5.5v3a.5.5 0 00.5.5h3a.5.5 0 010 1h-3A1.5 1.5 0 010 14.5v-3a.5.5 0 01.5-.5zm15 0a.5.5 0 01.5.5v3a1.5 1.5 0 01-1.5 1.5h-3a.5.5 0 010-1h3a.5.5 0 00.5-.5v-3a.5.5 0 01.5-.5z"
-                                  clip-rule="evenodd"/>
-                            <path fill-rule="evenodd"
-                                  d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1H3zm5-6a3 3 0 100-6 3 3 0 000 6z"
-                                  clip-rule="evenodd"/>
-                        </svg>
+                        <img class="avatar" :src="'https://i.pravatar.cc/150?u=' + user.id"/>
                         <div class="card-body">
-                            <h5 class="card-title"><a href="">[{{user.id}}] {{user.name}} {{user.surname}}</a></h5>
+                            <h5 class="card-title"><a href="">{{user.name}} {{user.surname}}</a></h5>
                             <div class="btn-group" role="group" aria-label="Basic example">
                                 <a href="#" v-on:click.prevent="addFriend(user.id)" class="btn btn-primary">Добавить в
                                     друзья</a>
@@ -160,7 +164,7 @@
                 </form>
             </div>
             <div class="card-footer text-muted text-center">
-                <button class="btn btn-link" v-on:click.prevent="isSignup = true">Регистрация</button>
+                <button class="btn btn-link" v-on:click.prevent="toggleSignup(true)">Регистрация</button>
             </div>
 
         </div>
@@ -169,7 +173,7 @@
                 <strong>Регистрация</strong>
             </div>
             <div class="card-body">
-                <form class="signup-form" v-on:submit="onLoginSubmit($event)">
+                <form class="signup-form" v-on:submit.prevent="onSignupSubmit($event)">
                     <div class="form-group">
                         <label for="exampleInputEmail1">Email</label>
                         <input name="email" type="email" required="required" class="form-control"
@@ -181,11 +185,43 @@
                         <input name="password" minlength="6" required="required" type="password" class="form-control"
                                id="exampleInputPassword1">
                     </div>
+                    <div class="form-group">
+                        <label for="name">Имя</label>
+                        <input name="name" maxlength="50" required="required" type="text" class="form-control"
+                               id="name">
+                    </div>
+                    <div class="form-group">
+                        <label for="surname">Фамилия</label>
+                        <input name="surname" maxlength="50" required="required" type="text" class="form-control"
+                               id="surname">
+                    </div>
+                    <div class="form-group">
+                        <label for="dateOfBirth">Дата рождения</label>
+                        <input name="dateOfBirth" required="required" type="date" class="form-control"
+                               id="dateOfBirth">
+                    </div>
+                    <div class="form-group">
+                        <label for="gender">Пол</label>
+                        <select class="form-control" name="gender" required="required" id="gender">
+                            <option>м</option>
+                            <option>ж</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="interests">Интересы</label>
+                        <textarea class="form-control" name="interests" id="gender"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="gender">Город</label>
+                        <select class="form-control" id="cityId" name="cityId" required="required">
+                            <option v-for="(city, index) in cities" :value=city.id>{{city.name}}</option>
+                        </select>
+                    </div>
                     <button type="submit" class="btn btn-primary">Зарегистрироваться</button>
                 </form>
             </div>
             <div class="card-footer text-muted text-center">
-                <button class="btn btn-link" v-on:click.prevent="isSignup = false">Войти</button>
+                <button class="btn btn-link" v-on:click.prevent="toggleSignup(false)">Войти</button>
             </div>
 
         </div>
@@ -212,6 +248,7 @@
             isSignup: false,
             friends: [],
             user: null,
+            cities: [],
             session: null,
             isLoading: 0,
             recommendations: [],
@@ -230,6 +267,24 @@
             await this.onAuthorized(user, session);
         },
         methods: {
+            toggleSignup: async function (isSignup) {
+                isSignup = !!isSignup;
+
+                if (isSignup) {
+                    const cities = await this.getCitiesRequest();
+                    if (!cities) {
+                        return;
+                    }
+                    this.cities = cities;
+
+                }
+                this.isSignup = isSignup;
+            },
+            getFriendList: function () {
+                const cloneFriends = [...this.friends];
+                cloneFriends.sort(() => 0.5 - Math.random())
+                return cloneFriends.slice(0, 27)
+            },
             addFriend: async function (userId) {
                 await this.addFriendRequest(this.session, userId);
                 await this.loadFriends();
@@ -237,6 +292,17 @@
             },
             onLoginSubmit: async function (e) {
                 const result = await this.authorizeRequest(Object.fromEntries(new FormData(e.srcElement)));
+                if (!result) {
+                    return
+                }
+                await this.onAuthorized(result.user, result.session);
+            },
+            onSignupSubmit: async function (e) {
+                const data = Object.fromEntries(new FormData(e.srcElement));
+                data.dateOfBirth = window.moment(data.dateOfBirth).toDate();
+                data.interests = (data.interests || '').split(/[,;]/gim).map(t => t.trim());
+                data.cityId = parseInt(data.cityId, 10);
+                const result = await this.signupRequest(data);
                 if (!result) {
                     return
                 }
@@ -318,6 +384,14 @@
             addFriendRequest: async function (session, friendId) {
                 const result = await this._request("/v1/user/addFriend", {session, friendId});
                 return !!result;
+            },
+            getCitiesRequest: async function () {
+                const result = await this._request("/v1/city/list", {});
+                return result && result.cities;
+            },
+            signupRequest: async function (data) {
+                const result = await this._request("/v1/auth/signup", data);
+                return result;
             },
             _request: async function (apiMethod, data) {
                 this.isLoading++;
