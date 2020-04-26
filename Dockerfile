@@ -11,8 +11,11 @@ RUN mkdir -p ${APPDIR}
 WORKDIR ${APPDIR}
 # Copying source code
 COPY . .
+RUN ls -la
+RUN go mod download
+RUN go mod vendor
 # Building application
-RUN go build -ldflags "-s -w" -mod=vendor -o ${ARTIFACT}
+RUN GO111MODULE=on CGO_ENABLED=0 GOOS=linux GOARCH=amd64  go build -ldflags "-s -w" -o ${ARTIFACT}
 RUN ls -la
 
 
