@@ -26,7 +26,7 @@ func (u *User) SetPage(page Page) {
 
 type Page struct {
 	Slug      string `json:"slug" db:"page_slug" validate:"max=50"`
-	IsPrivate bool   `json:"is_private" db:"page_is_private"`
+	IsPrivate bool   `json:"isPrivate" db:"page_is_private"`
 }
 
 type City struct {

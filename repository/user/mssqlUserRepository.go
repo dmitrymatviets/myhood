@@ -3,6 +3,7 @@ package user
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"github.com/dmitrymatviets/myhood/core/contract"
 	"github.com/dmitrymatviets/myhood/core/model"
 	"github.com/dmitrymatviets/myhood/infrastructure"
@@ -30,6 +31,12 @@ func (ur *MssqlUserRepository) SignUp(ctx context.Context, user *model.UserWithP
 		savedUser, localErr = ur.createUser(ctx, user)
 		if localErr != nil {
 			return pkg.NewPublicError("Ошибка регистрации", localErr)
+		}
+
+		savedUser.Page.Slug = fmt.Sprintf("id%d", savedUser.Id)
+		savedUser, localErr = ur.SaveUser(ctx, savedUser)
+		if localErr != nil {
+			return pkg.NewPublicError("Ошибка присвоения slug", localErr)
 		}
 
 		sessionId, savedUser, localErr = ur.Authenticate(ctx, model.Credentials{Email: user.Email, Password: user.Password})

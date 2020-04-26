@@ -238,7 +238,7 @@ func TestSaveUser_CorrectId_Success(t *testing.T) {
 	user.Interests = []string{"пение", "гитара"}
 	user.CityId = 2
 	user.Page.Slug = fmt.Sprintf("page-%d", rand.Int())
-	user.Page.IsPrivate = true
+	user.Page.IsPrivate = false
 	savedUser, err := us.SaveUser(context.Background(), session, user)
 	assert.NoError(t, err)
 	assert.NotNil(t, savedUser)

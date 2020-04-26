@@ -41,11 +41,12 @@ func NewUserEndpoint(s *Server, userService contract.IUserService) *UserEndpoint
 		HandleFuncs: []gin.HandlerFunc{endpoint.RemoveFriendV1},
 	})
 
-	s.AddRoutes(&baseHTTP.Route{
-		Method:      http.MethodPost,
-		Path:        "v1/user/saveUser",
-		HandleFuncs: []gin.HandlerFunc{endpoint.SaveUserV1},
-	})
+	/*
+		s.AddRoutes(&baseHTTP.Route{
+			Method:      http.MethodPost,
+			Path:        "v1/user/saveUser",
+			HandleFuncs: []gin.HandlerFunc{endpoint.SaveUserV1},
+		})*/
 
 	s.AddRoutes(&baseHTTP.Route{
 		Method:      http.MethodPost,
