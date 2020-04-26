@@ -35,7 +35,7 @@
         }
 
         .messages {
-            position: absolute;
+            position: fixed;
             bottom: 20px;
             right: 20px;
             list-style-type: none;
@@ -53,7 +53,7 @@
         }
 
         .loader {
-            position: absolute;
+            position: fixed;
             top: 0;
             left: 0;
             right: 0;
@@ -66,6 +66,12 @@
             height: 100%;
             font-weight: bold;
             font-size: 30px;
+        }
+
+        .rec {
+            float: left;
+            width: 30%;
+            padding: 20px;
         }
     </style>
 </head>
@@ -106,7 +112,26 @@
                     </div>
                 </div>
                 <div class="col-md-9">
-                    Путушки
+                    <h3>Рекомендации</h3>
+                    <div class="card rec text-center" v-for="(user, index) in recommendations">
+                        <svg class="bi bi-person-bounding-box" width="100%" height="100px" viewBox="0 0 16 16"
+                             fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                            <path fill-rule="evenodd"
+                                  d="M1.5 1a.5.5 0 00-.5.5v3a.5.5 0 01-1 0v-3A1.5 1.5 0 011.5 0h3a.5.5 0 010 1h-3zM11 .5a.5.5 0 01.5-.5h3A1.5 1.5 0 0116 1.5v3a.5.5 0 01-1 0v-3a.5.5 0 00-.5-.5h-3a.5.5 0 01-.5-.5zM.5 11a.5.5 0 01.5.5v3a.5.5 0 00.5.5h3a.5.5 0 010 1h-3A1.5 1.5 0 010 14.5v-3a.5.5 0 01.5-.5zm15 0a.5.5 0 01.5.5v3a1.5 1.5 0 01-1.5 1.5h-3a.5.5 0 010-1h3a.5.5 0 00.5-.5v-3a.5.5 0 01.5-.5z"
+                                  clip-rule="evenodd"/>
+                            <path fill-rule="evenodd"
+                                  d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1H3zm5-6a3 3 0 100-6 3 3 0 000 6z"
+                                  clip-rule="evenodd"/>
+                        </svg>
+                        <div class="card-body">
+                            <h5 class="card-title"><a href="">[{{user.id}}] {{user.name}} {{user.surname}}</a></h5>
+                            <div class="btn-group" role="group" aria-label="Basic example">
+                                <a href="#" v-on:click.prevent="addFriend(user.id)" class="btn btn-primary">Добавить в
+                                    друзья</a>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </div>
@@ -189,6 +214,7 @@
             user: null,
             session: null,
             isLoading: 0,
+            recommendations: [],
             messages: []
         },
         created: async function () {
@@ -201,20 +227,41 @@
             if (!user) {
                 return
             }
-            this.setLoginState(user, session);
+            await this.onAuthorized(user, session);
         },
         methods: {
+            addFriend: async function (userId) {
+                await this.addFriendRequest(this.session, userId);
+                await this.loadFriends();
+                await this.getRecommendations();
+            },
             onLoginSubmit: async function (e) {
                 const result = await this.authorizeRequest(Object.fromEntries(new FormData(e.srcElement)));
                 if (!result) {
                     return
                 }
-                this.setLoginState(result.user, result.session);
-                const friends = await this.getFriendsRequest({session: this.session});
-                if (!friends) {
-                    return;
+                await this.onAuthorized(result.user, result.session);
+            },
+            loadFriends: async function () {
+                const friends = await this.getFriendsRequest({
+                    session: this.session,
+                    userId: this.user && this.user.id
+                });
+                if (friends) {
+                    this.setFriendsState(friends);
                 }
-                this.setFriendsState(friends);
+            },
+            getRecommendations: async function () {
+                const recommendations = await this.getRecommendationsRequest(this.session)
+                if (recommendations) {
+                    this.setRecommendationsState(recommendations);
+                }
+            },
+            onAuthorized: async function (user, session) {
+                this.setLoginState(user, session);
+                await this.loadFriends();
+                await this.getRecommendations();
+
             },
             onLogout: async function (e) {
                 await this.logoutRequest(this.session);
@@ -228,6 +275,9 @@
                 if (this.isLogged) {
                     this.addMessage(`${this.user.name} успешно авторизован`);
                 }
+            },
+            setRecommendationsState: function (recommendations) {
+                this.recommendations = recommendations;
             },
             setFriendsState: function (friends) {
                 this.friends = friends;
@@ -257,8 +307,16 @@
                 const result = await this._request("/v1/user/getFriends", data);
                 return result && result.friends;
             },
+            getRecommendationsRequest: async function (session) {
+                const result = await this._request("/v1/user/getRecommendations", {session});
+                return result && result.recommendations;
+            },
             logoutRequest: async function (session) {
                 const result = await this._request("/v1/auth/logout", {session});
+                return !!result;
+            },
+            addFriendRequest: async function (session, friendId) {
+                const result = await this._request("/v1/user/addFriend", {session, friendId});
                 return !!result;
             },
             _request: async function (apiMethod, data) {

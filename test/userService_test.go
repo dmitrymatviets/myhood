@@ -145,6 +145,17 @@ func TestAddFriend_SelfAdd_Fails(t *testing.T) {
 	fmt.Println(err)
 }
 
+func TestAddFriend_DoubleAdd_Fails(t *testing.T) {
+	us := getUserService()
+	session, _ := createValidUser()
+	_, friend := createValidUser()
+	err := us.AddFriend(context.Background(), session, friend.Id)
+	assert.NoError(t, err)
+	err = us.AddFriend(context.Background(), session, friend.Id)
+	assert.Error(t, err)
+	fmt.Println(err)
+}
+
 func TestAddFriend_CorrectId_Success(t *testing.T) {
 	us := getUserService()
 	session, user := createValidUser()
@@ -256,4 +267,21 @@ func TestGetRecommendations_CorrectSession_Success(t *testing.T) {
 	recs, err := us.GetRecommendations(context.Background(), session)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, recs)
+}
+
+func TestGetRecommendations_AfterFriendAdd_ExcludesFriend(t *testing.T) {
+	us := getUserService()
+	session, _ := createValidUser()
+	recs, err := us.GetRecommendations(context.Background(), session)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, recs)
+	friendId := recs[0].Id
+	err = us.AddFriend(context.Background(), session, friendId)
+	assert.NoError(t, err)
+	recs2, err := us.GetRecommendations(context.Background(), session)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, recs)
+	for _, item := range recs2 {
+		assert.NotEqual(t, item.Id, friendId)
+	}
 }

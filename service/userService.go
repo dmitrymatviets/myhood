@@ -37,15 +37,18 @@ func (us *UserService) GetByIds(ctx context.Context, sessionId model.Session, id
 }
 
 func (us *UserService) GetFriends(ctx context.Context, sessionId model.Session, userId model.IntId) ([]*model.DisplayUserDto, error) {
-	_, err := us.authService.GetUserBySession(ctx, sessionId)
+	user, err := us.authService.GetUserBySession(ctx, sessionId)
 	if err != nil {
 		return nil, err
 	}
 
-	user, err := us.userRepo.GetById(ctx, userId)
-	if err != nil {
-		return nil, err
+	if userId != user.Id {
+		user, err = us.userRepo.GetById(ctx, userId)
+		if err != nil {
+			return nil, err
+		}
 	}
+
 	if user == nil {
 		return nil, pkg.NewPublicError("Ошибка получения пользователя")
 	}
@@ -88,6 +91,17 @@ func (us *UserService) AddFriend(ctx context.Context, sessionId model.Session, f
 
 	if friend == nil {
 		return pkg.NewPublicError("Ошибка получения друга")
+	}
+
+	existingFriends, err := us.userRepo.GetFriends(ctx, sessionUser)
+	if err != nil {
+		return err
+	}
+
+	for _, existingFriend := range existingFriends {
+		if existingFriend.Id == friendId {
+			return pkg.NewPublicError("Данный человек уже добавлен в друзья")
+		}
 	}
 
 	return us.userRepo.AddFriend(ctx, sessionUser, friend)

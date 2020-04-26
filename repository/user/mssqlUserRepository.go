@@ -10,6 +10,7 @@ import (
 	"github.com/dmitrymatviets/myhood/pkg"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
+	"time"
 )
 
 type MssqlUserRepository struct {
@@ -304,17 +305,22 @@ func (ur *MssqlUserRepository) GetRecommendations(ctx context.Context, user *mod
 	                , page_slug
 	                , page_is_private
 	             from users u
-                 left join friends f on u.user_id = f.user_id 
+                 left join friends f on u.user_id = f.friend_id 
                                     and f.user_id = ?
-                 where f.user_id is null
+                 where f.user_id is null 
+                   and u.user_id != ?
                  limit 100`,
-		user.Id)
+		user.Id, user.Id)
 
 	if err != nil {
 		return nil, pkg.NewPublicError("Ошибка получения списка друзей", err)
 	}
 
 	return dtoUsers, nil
+}
+
+func (ur *MssqlUserRepository) CleanSessions(ctx context.Context, lifeDurationThreshold time.Duration) {
+	panic("implement me")
 }
 
 func (ur *MssqlUserRepository) createUser(ctx context.Context, user *model.UserWithPassword) (*model.User, error) {

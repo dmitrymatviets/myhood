@@ -3,6 +3,7 @@ package contract
 import (
 	"context"
 	"github.com/dmitrymatviets/myhood/core/model"
+	"time"
 )
 
 type IAuthService interface {
@@ -15,6 +16,8 @@ type IAuthService interface {
 	GetUserBySession(ctx context.Context, sessionId model.Session) (*model.User, error)
 	// выход из системы
 	Logout(ctx context.Context, sessionId model.Session) error
+	// очистка устаревших сессий
+	CleanSessions(ctx context.Context, lifeDurationThreshold time.Duration)
 }
 
 type IUserService interface {
@@ -43,6 +46,8 @@ type IUserRepository interface {
 	GetUserIdBySession(ctx context.Context, sessionId model.Session) (model.IntId, error)
 	// выход из системы
 	Logout(ctx context.Context, sessionId model.Session) error
+	// очистка устаревших сессий
+	CleanSessions(ctx context.Context, lifeDurationThreshold time.Duration)
 	// получение пользователя по id
 	GetById(ctx context.Context, id model.IntId) (*model.User, error)
 	// получение пользователя по email

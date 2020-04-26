@@ -67,6 +67,10 @@ func (as *AuthService) Logout(ctx context.Context, sessionId model.Session) erro
 	return as.userRepo.Logout(ctx, sessionId)
 }
 
+func (as *AuthService) CleanSessions(ctx context.Context, lifeDurationThreshold time.Duration) {
+	panic("implement me")
+}
+
 func (as *AuthService) validateSignupDto(ctx context.Context, dto model.SignupDto) error {
 	err := as.validator.ValidateStruct(dto)
 	if err != nil {

@@ -47,17 +47,23 @@ func getAuthService() contract.IAuthService {
 
 func getValidSignupDto() model.SignupDto {
 	rand2.Seed(time.Now().UnixNano())
+
+	names := []string{"Иван", "Алексей", "Дмитрий", "Артем", "Василий", "Олег", "Марат", "Константин", "Антон", "Филипп"}
+	surnames := []string{"Смирнов", "Иванов", "Кузнецов", "Соколов", "Попов", "Лебедев", "Козлов", "Новиков", "Морозов", "Петров"}
+	interests := []string{"программирование", "теннис", "книги", "кино", "музыка", "охота", "рыбалка", "футбол", "фото"}
+
+	rand2.Shuffle(len(interests), func(i, j int) { interests[i], interests[j] = interests[j], interests[i] })
 	return model.SignupDto{
 		Credentials: model.Credentials{
 			Email:    fmt.Sprintf("test%d@test%d.com", rand2.Int(), rand2.Int()),
 			Password: defaultPass,
 		},
-		Name:        "Дмитрий",
-		Surname:     "Матвиец",
-		DateOfBirth: time.Date(1989, 07, 17, 00, 00, 00, 00, time.Local),
+		Name:        names[rand2.Intn(len(names))],
+		Surname:     surnames[rand2.Intn(len(surnames))],
+		DateOfBirth: time.Date(1970+rand2.Intn(40), time.Month(rand2.Intn(10)+1), rand2.Intn(27)+1, 00, 00, 00, 00, time.Local),
 		Gender:      "м",
-		Interests:   []string{"программирование"},
-		CityId:      1,
+		Interests:   append([]string{}, interests[0:rand2.Intn(len(interests)/2)]...),
+		CityId:      model.IntId(rand2.Intn(4) + 1),
 	}
 }
 
