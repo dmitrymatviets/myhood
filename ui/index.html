@@ -93,7 +93,37 @@
 <div id="app-2">
     <div v-if="isLogged">
         <div class="container-fluid gedf-wrapper">
-            <div class="row">
+            <div class="row" v-if="viewUserPageData">
+                <div class="col-md-3">
+                    <div class="card">
+                        <div class="card-header">
+                            <img class="avatar" :src="'https://i.pravatar.cc/150?u=' + viewUserPageData.id"/>
+                        </div>
+                        <div class="card-body">
+                            <div class="h5">{{viewUserPageData.name}} {{viewUserPageData.surname}}</div>
+                            <div class="h7 text-muted">{{ moment(viewUserPageData.dateOfBirth).format("DD.MM.YYYY") }}</div>
+                            <div class="h7">Пол: <span class="badge badge-info">{{ viewUserPageData.gender }}</span>
+                            </div>
+                            <div class="h7">Интересы: {{viewUserPageData.interests.join(", ")}}
+                            </div>
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <a class="btn btn-primary" href="#" v-on:click="viewUserPageData = null">Вернуться на
+                                    главную</a>
+                            </li>
+                            <li class="list-group-item">
+                                <button class="btn btn-primary" v-on:click.prevent="onLogout($event)">Выйти</button>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-9">
+
+
+                </div>
+            </div>
+            <div class="row" v-else>
                 <div class="col-md-3">
                     <div class="card">
                         <div class="card-header">
@@ -112,9 +142,11 @@
                                             class="badge badge-info">{{friends.length}}</span></div>
                                 <div class="row">
                                     <div class="col-md-4" v-for="(friend, index) in getFriendList()">
-                                        <img class="avatar avatar-sm"
-                                             :src="'https://i.pravatar.cc/150?u=' + friend.id"/>
-                                        <div>{{friend.name}} {{friend.surname}}</div>
+                                        <a :href="'/#'+ friend.slug" v-on:click="showUser(friend.id)">
+                                            <img class="avatar avatar-sm"
+                                                 :src="'https://i.pravatar.cc/150?u=' + friend.id"/>
+                                            <div>{{friend.name}} {{friend.surname}}</div>
+                                        </a>
                                     </div>
                                 </div>
                             </li>
@@ -129,9 +161,12 @@
                     <div class="card rec text-center" v-for="(user, index) in recommendations">
                         <img class="avatar" :src="'https://i.pravatar.cc/150?u=' + user.id"/>
                         <div class="card-body">
-                            <h5 class="card-title"><a href="">{{user.name}} {{user.surname}}</a></h5>
+                            <h5 class="card-title"><a :href="'/#'+ user.slug"
+                                                      v-on:click="showUser(user.id)">{{user.name}} {{user.surname}}</a>
+                            </h5>
                             <div class="btn-group" role="group" aria-label="Basic example">
-                                <a href="#" v-on:click.prevent="addFriend(user.id)" class="btn btn-primary">Добавить в
+                                <a href="#" v-on:click.prevent="addFriend(user.id)" class="btn btn-primary">Добавить
+                                    в
                                     друзья</a>
                             </div>
                         </div>
@@ -140,6 +175,7 @@
                 </div>
             </div>
         </div>
+
     </div>
     <div class="login" v-else>
 
@@ -253,7 +289,8 @@
             session: null,
             isLoading: 0,
             recommendations: [],
-            messages: []
+            messages: [],
+            viewUserPageData: null
         },
         created: async function () {
             this.addMessage("Привет!")
@@ -280,6 +317,10 @@
 
                 }
                 this.isSignup = isSignup;
+            },
+            showUser: async function (userId) {
+                const user = await this.getUserRequest(userId);
+                this.viewUserPageData = user;
             },
             getFriendList: function () {
                 const cloneFriends = [...this.friends];
@@ -393,6 +434,10 @@
             signupRequest: async function (data) {
                 const result = await this._request("/v1/auth/signup", data);
                 return result;
+            },
+            getUserRequest: async function (userId) {
+                const result = await this._request("/v1/user/getUser", {session: this.session, userId});
+                return result && result.user;
             },
             _request: async function (apiMethod, data) {
                 this.isLoading++;
