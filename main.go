@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"flag"
 	"github.com/dmitrymatviets/myhood/api"
+	"github.com/dmitrymatviets/myhood/core/contract"
 	"github.com/dmitrymatviets/myhood/infrastructure/config"
 	"github.com/dmitrymatviets/myhood/infrastructure/database"
 	"github.com/dmitrymatviets/myhood/infrastructure/logger"
@@ -12,7 +14,10 @@ import (
 	"github.com/dmitrymatviets/myhood/repository/user"
 	"github.com/dmitrymatviets/myhood/service"
 	"go.uber.org/fx"
+	"os"
 )
+
+const countGenerateProfiles = 100000
 
 func main() {
 	fx.New(
@@ -29,8 +34,19 @@ func main() {
 			service.NewCityService,
 			api.NewServer,
 		),
-		fx.Invoke(startApp),
+		fx.Invoke(getCallback()),
 	).Run()
+}
+
+func getCallback() interface{} {
+	isGenerateProfilesMode := flag.Bool("generate", false, "help message for flagname")
+	flag.Parse()
+
+	if *isGenerateProfilesMode {
+		return startProfilesGeneration
+	}
+
+	return startApp
 }
 
 func startApp(server *api.Server, lc fx.Lifecycle) {
@@ -43,4 +59,17 @@ func startApp(server *api.Server, lc fx.Lifecycle) {
 			return server.Stop()
 		},
 	})
+}
+
+func startProfilesGeneration(ur contract.IUserRepository) {
+	// hack for faster generation
+	if urImpl, ok := ur.(*user.MssqlUserRepository); ok {
+		urImpl.DisableFastGenerationMode = false
+	}
+
+	err := service.GenerateProfiles(ur, "123456", countGenerateProfiles, 500)
+	if err != nil {
+		panic(err)
+	}
+	os.Exit(0)
 }

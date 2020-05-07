@@ -15,18 +15,26 @@ import (
 )
 
 type MssqlUserRepository struct {
-	db *database.Database
+	db                        *database.Database
+	DisableFastGenerationMode bool
 }
 
 func NewMssqlUserRepository(db *database.Database) contract.IUserRepository {
-	return &MssqlUserRepository{db: db}
+	return &MssqlUserRepository{db: db, DisableFastGenerationMode: true}
 }
 
 func (ur *MssqlUserRepository) SignUp(ctx context.Context, user *model.UserWithPassword) (model.Session, *model.User, error) {
 	var sessionId model.Session
 	var savedUser *model.User
 
-	err := ur.db.WithTransaction(ctx, func(ctx context.Context) error {
+	txMethod := ur.db.WithTransaction
+	if !ur.DisableFastGenerationMode {
+		txMethod = func(ctx context.Context, fn func(ctx context.Context) error) (err error) {
+			return fn(ctx)
+		}
+	}
+
+	err := txMethod(ctx, func(ctx context.Context) error {
 		var localErr error
 		savedUser, localErr = ur.createUser(ctx, user)
 		if localErr != nil {
@@ -39,9 +47,11 @@ func (ur *MssqlUserRepository) SignUp(ctx context.Context, user *model.UserWithP
 			return pkg.NewPublicError("Ошибка присвоения slug", localErr)
 		}
 
-		sessionId, savedUser, localErr = ur.Authenticate(ctx, model.Credentials{Email: user.Email, Password: user.Password})
-		if localErr != nil {
-			return pkg.NewPublicError("Ошибка завершения регистрации", localErr)
+		if ur.DisableFastGenerationMode {
+			sessionId, savedUser, localErr = ur.Authenticate(ctx, model.Credentials{Email: user.Email, Password: user.Password})
+			if localErr != nil {
+				return pkg.NewPublicError("Ошибка завершения регистрации", localErr)
+			}
 		}
 
 		return nil
@@ -209,6 +219,29 @@ func (ur *MssqlUserRepository) GetByIds(ctx context.Context, ids []model.IntId) 
 	}
 
 	return result, nil
+}
+
+func (ur *MssqlUserRepository) Search(ctx context.Context, searchDto model.SearchDto) ([]*model.DisplayUserDto, error) {
+	dtoUsers := make([]*model.DisplayUserDto, 0)
+
+	err := ur.db.TxOrDbFromContext(ctx).SelectContext(ctx, &dtoUsers,
+		`select user_id
+                    , name
+	                , surname
+	                , page_slug
+	                , page_is_private
+	             from users
+	            where name    like concat(?, '%')
+	              and surname like concat(?, '%')
+                order by user_id`,
+		searchDto.NamePrefix,
+		searchDto.SurnamePrefix)
+
+	if err != nil {
+		return nil, pkg.NewPublicError("Ошибка поиска пользователей", err)
+	}
+
+	return dtoUsers, nil
 }
 
 func (ur *MssqlUserRepository) GetFriends(ctx context.Context, user *model.User) ([]*model.DisplayUserDto, error) {

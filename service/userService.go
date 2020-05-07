@@ -36,6 +36,15 @@ func (us *UserService) GetByIds(ctx context.Context, sessionId model.Session, id
 	return us.userRepo.GetByIds(ctx, ids)
 }
 
+func (us *UserService) Search(ctx context.Context, sessionId model.Session, searchDto model.SearchDto) ([]*model.DisplayUserDto, error) {
+	_, err := us.authService.GetUserBySession(ctx, sessionId)
+	if err != nil {
+		return nil, err
+	}
+
+	return us.userRepo.Search(ctx, searchDto)
+}
+
 func (us *UserService) GetFriends(ctx context.Context, sessionId model.Session, userId model.IntId) ([]*model.DisplayUserDto, error) {
 	user, err := us.authService.GetUserBySession(ctx, sessionId)
 	if err != nil {

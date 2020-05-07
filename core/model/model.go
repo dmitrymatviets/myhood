@@ -84,3 +84,8 @@ type Session string
 func NewSession() Session {
 	return Session(uuid.New().String())
 }
+
+type SearchDto struct {
+	NamePrefix    string `json:"namePrefix"`
+	SurnamePrefix string `json:"surnamePrefix"`
+}

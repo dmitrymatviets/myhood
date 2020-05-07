@@ -4,11 +4,11 @@ import (
 	"github.com/dmitrymatviets/myhood/infrastructure/database"
 	"github.com/dmitrymatviets/myhood/infrastructure/logger"
 	"github.com/dmitrymatviets/myhood/infrastructure/server/config"
+	"github.com/dmitrymatviets/myhood/util"
 	"github.com/joho/godotenv"
 	"github.com/kelseyhightower/envconfig"
 	"log"
 	"os"
-	"strings"
 )
 
 type Config struct {
@@ -18,13 +18,8 @@ type Config struct {
 }
 
 func Load() (dbCfg database.DatabaseConfig, serverCfg config.ServerConfig, loggerCfg logger.LoggerConfig, err error) {
-	wd, _ := os.Getwd()
-	envPath := ".env"
-	isTestMode := false
-	if strings.HasSuffix(wd, "test") {
-		envPath = "./../.env"
-		isTestMode = true
-	}
+	isTestMode := util.IsTestMode()
+	envPath := util.RelPathToAbs(".env")
 	godotenv.Load(envPath)
 
 	if !isTestMode {

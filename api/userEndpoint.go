@@ -41,6 +41,12 @@ func NewUserEndpoint(s *Server, userService contract.IUserService) *UserEndpoint
 		HandleFuncs: []gin.HandlerFunc{endpoint.RemoveFriendV1},
 	})
 
+	s.AddRoutes(&baseHTTP.Route{
+		Method:      http.MethodPost,
+		Path:        "v1/user/search",
+		HandleFuncs: []gin.HandlerFunc{endpoint.SearchV1},
+	})
+
 	/*
 		s.AddRoutes(&baseHTTP.Route{
 			Method:      http.MethodPost,
@@ -127,6 +133,19 @@ func (ue *UserEndpoint) GetRecommendationsV1(ctx *gin.Context) {
 		}
 		return dto.GetRecommendationsResponse{
 			Recommendations: recs,
+		}, nil
+	})
+}
+
+func (ue *UserEndpoint) SearchV1(ctx *gin.Context) {
+	var requestDto dto.SearchRequest
+	ue.ApiMethod(ctx, &requestDto, func() (interface{}, error) {
+		users, err := ue.Search(ctx, requestDto.Session, requestDto.SearchDto)
+		if err != nil {
+			return nil, err
+		}
+		return dto.SearchResponse{
+			Users: users,
 		}, nil
 	})
 }

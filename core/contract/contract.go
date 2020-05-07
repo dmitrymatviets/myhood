@@ -25,6 +25,8 @@ type IUserService interface {
 	GetById(ctx context.Context, sessionId model.Session, id model.IntId) (*model.User, error)
 	// получение нескольких пользователей по id
 	GetByIds(ctx context.Context, sessionId model.Session, ids []model.IntId) ([]*model.User, error)
+	// поиск пользователей
+	Search(ctx context.Context, sessionId model.Session, searchDto model.SearchDto) ([]*model.DisplayUserDto, error)
 	// получение списка друзей
 	GetFriends(ctx context.Context, sessionId model.Session, userId model.IntId) ([]*model.DisplayUserDto, error)
 	// сохранение пользователя
@@ -59,6 +61,8 @@ type IUserRepository interface {
 	GetByEmail(ctx context.Context, email string) (*model.User, error)
 	// получение нескольких пользователей по id
 	GetByIds(ctx context.Context, ids []model.IntId) ([]*model.User, error)
+	// поиск пользователей
+	Search(ctx context.Context, searchDto model.SearchDto) ([]*model.DisplayUserDto, error)
 	// сохранение пользователя
 	SaveUser(ctx context.Context, user *model.User) (*model.User, error)
 	// список друзей
