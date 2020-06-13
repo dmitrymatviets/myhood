@@ -7,25 +7,53 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
+	"math/rand"
+	"time"
 )
 
 const ContextTransactionKey = "db.transaction"
 
 type DatabaseConfig struct {
-	Server       string `envconfig:"server"`
-	User         string `envconfig:"user"`
-	Password     string `envconfig:"password"`
-	Port         int    `envconfig:"port"`
-	DatabaseName string `envconfig:"database"`
-	MaxOpenConns int    `envconfig:"maxopenconns"`
-	MaxIdleConns int    `envconfig:"maxidleconns"`
+	Server       string   `envconfig:"server"`
+	ReadReplicas []string `envconfig:"readreplicas"`
+	User         string   `envconfig:"user"`
+	Password     string   `envconfig:"password"`
+	Port         int      `envconfig:"port"`
+	DatabaseName string   `envconfig:"database"`
+	MaxOpenConns int      `envconfig:"maxopenconns"`
+	MaxIdleConns int      `envconfig:"maxidleconns"`
 }
 
 type Database struct {
 	*sqlx.DB
+	readReplicaDbs []*sqlx.DB
+}
+
+func (d *Database) GetReadReplicaDb() *sqlx.DB {
+	rand.Seed(time.Now().UnixNano())
+	return d.readReplicaDbs[rand.Intn(len(d.readReplicaDbs))]
 }
 
 func NewDatabase(c DatabaseConfig) (*Database, error) {
+	database := &Database{}
+	db, err := newDb(c)
+	if err != nil {
+		return nil, err
+	}
+	database.DB = db
+	for _, replicaHost := range c.ReadReplicas {
+		cfgClone := c
+		cfgClone.Server = replicaHost
+		replicaDb, err := newDb(c)
+		if err != nil {
+			return nil, err
+		}
+		database.readReplicaDbs = append(database.readReplicaDbs, replicaDb)
+	}
+	return database, nil
+}
+
+func newDb(c DatabaseConfig) (*sqlx.DB, error) {
 	connString := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?parseTime=true",
 		c.User,
 		c.Password,
@@ -39,11 +67,10 @@ func NewDatabase(c DatabaseConfig) (*Database, error) {
 		return nil, err
 	}
 
-	cp := &Database{db}
 	db.SetMaxOpenConns(c.MaxOpenConns)
 	db.SetMaxIdleConns(c.MaxIdleConns)
 
-	return cp, nil
+	return db, nil
 }
 
 func (db *Database) commit(ctx *context.Context) error {

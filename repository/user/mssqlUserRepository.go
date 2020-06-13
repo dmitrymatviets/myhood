@@ -224,7 +224,7 @@ func (ur *MssqlUserRepository) GetByIds(ctx context.Context, ids []model.IntId) 
 func (ur *MssqlUserRepository) Search(ctx context.Context, searchDto model.SearchDto) ([]*model.DisplayUserDto, error) {
 	dtoUsers := make([]*model.DisplayUserDto, 0)
 
-	err := ur.db.TxOrDbFromContext(ctx).SelectContext(ctx, &dtoUsers,
+	err := ur.db.GetReadReplicaDb().SelectContext(ctx, &dtoUsers,
 		`select user_id
                     , name
 	                , surname
@@ -338,18 +338,20 @@ func (ur *MssqlUserRepository) RemoveFriend(ctx context.Context, user *model.Use
 
 func (ur *MssqlUserRepository) GetRecommendations(ctx context.Context, user *model.User) ([]*model.DisplayUserDto, error) {
 	dtoUsers := make([]*model.DisplayUserDto, 0)
-	err := ur.db.TxOrDbFromContext(ctx).SelectContext(ctx, &dtoUsers,
+	err := ur.db.GetReadReplicaDb().SelectContext(ctx, &dtoUsers,
 		`select u.user_id
                     , name
-	                , surname
-	                , page_slug
-	                , page_is_private
-	             from users u
-                 left join friends f on u.user_id = f.friend_id 
-                                    and f.user_id = ?
-                 where f.user_id is null 
-                   and u.user_id != ?
-                 limit 100`,
+                    , surname
+                    , page_slug
+                    , page_is_private
+                from users u
+               where not exists( select f.user_id
+                                   from friends f
+                                  where f.friend_id = u.user_id
+                                    and f.user_id   = ?
+                               )
+                 and u.user_id != ?
+               limit 100`,
 		user.Id, user.Id)
 
 	if err != nil {
